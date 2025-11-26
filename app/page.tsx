@@ -134,56 +134,82 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- MANIFESTO RENOVADO --- */}
-      <section id="about" className="py-32 px-4 bg-[#0A0A0A] border-y border-white/5">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      {/* --- MANIFESTO: THE REACTOR CORE --- */}
+      <section id="about" className="relative py-32 px-4 border-y border-white/5 overflow-hidden">
+        
+        {/* Background Grid Técnico */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] pointer-events-none"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10">
             
-            <div className="space-y-5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-mono uppercase tracking-wider mb-4">
-                    <Sparkles size={12} /> O Nosso Manifesto
+            {/* Cabeçalho do Manifesto */}
+            <div className="text-center max-w-3xl mx-auto mb-20">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-white/60 text-[10px] font-mono uppercase tracking-widest mb-6 backdrop-blur-md">
+                    <Sparkles size={10} /> The Elinara Concept
                 </div>
-                <h2 className="text-4xl md:text-5xl font-serif font-bold text-white italic leading-tight">
-                    Economia + Investigação + <br/>
-                    <span className="text-blue-500 italic">Programação + </span>
+                
+                <h2 className="text-4xl md:text-6xl font-bold tracking-tighter text-white mb-8 leading-tight">
+                    Nós não adivinhamos. <br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-white">Nós calculamos.</span>
                 </h2>
-                <div className="space-y-3 text-gray-400 text-lg leading-relaxed font-light">
-                    <p>
-                        Somos curiosos, observamos o mundo, identificamos problemas, juntamos a teoria a pratica e desenvolvemos soluções reais para os problemas da humanidade. 
-                    </p>
-
-                        Na <strong>Elinara Labs</strong>, traduzimos equações em linhas de código que empresas, familias e governos utilizam para melhorar a sua vida.
-                    
-                </div>
+                
+                <p className="text-gray-400 text-lg md:text-xl font-light leading-relaxed">
+                    O mundo é feito de opiniões. A <strong className="text-white">Elinara Labs</strong> é o refúgio da precisão.
+                    Somos o elo de ligação entre a equação matemática e a decisão estratégica numa sala de reuniões.
+                </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-6">
-                <div className="bg-[#111] p-6 rounded-2xl border border-white/5 flex items-start gap-5 hover:border-blue-500/30 transition-all group">
-                    <div className="p-4 bg-blue-900/20 rounded-xl text-blue-400 group-hover:text-blue-300 transition-colors">
-                        <Brain size={28} />
+            {/* A Grelha de Processo (The Flow) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                
+                {/* Linha de Conexão (Apenas Desktop) */}
+                <div className="hidden md:block absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500/30 to-transparent -translate-y-1/2 z-0"></div>
+
+                {/* PILAR 1: TEORIA */}
+                <div className="group relative z-10 bg-[#0A0A0A] border border-white/10 p-8 rounded-2xl hover:border-blue-500/50 transition-all duration-500 hover:-translate-y-2">
+                    <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+                    <div className="w-12 h-12 bg-[#111] border border-white/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+                        <Brain size={24} className="text-blue-400"/>
                     </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-2">Rigor Académico</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">Soluções derivadas de teoria económica validada e comprovada</p>
-                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                        1. Rigor Académico
+                        <span className="text-[10px] font-mono text-blue-500 border border-blue-500/30 px-1.5 rounded">INPUT</span>
+                    </h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                        Ignoramos o ruído. Vamos diretamente à fonte: papers da Scopus, bases de dados do Banco Mundial e teoremas económicos validados.
+                    </p>
                 </div>
-                <div className="bg-[#111] p-6 rounded-2xl border border-white/5 flex items-start gap-5 hover:border-green-500/30 transition-all group">
-                     <div className="p-4 bg-green-900/20 rounded-xl text-green-400 group-hover:text-green-300 transition-colors">
-                        <Zap size={28} />
+
+                {/* PILAR 2: CÓDIGO */}
+                <div className="group relative z-10 bg-[#0A0A0A] border border-white/10 p-8 rounded-2xl hover:border-green-500/50 transition-all duration-500 hover:-translate-y-2">
+                    <div className="absolute inset-0 bg-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+                    <div className="w-12 h-12 bg-[#111] border border-white/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(34,197,94,0.2)]">
+                        <Code2 size={24} className="text-green-400"/>
                     </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-2">Engenharia Rápida</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">Python & AI para prototipar em dias, com foco nos resultados</p>
-                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                        2. Engenharia
+                        <span className="text-[10px] font-mono text-green-500 border border-green-500/30 px-1.5 rounded">PROCESS</span>
+                    </h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                        Traduzimos a abstração académica para Python e TypeScript. Construímos pipelines de dados que transformam estática em dinâmica.
+                    </p>
                 </div>
-                <div className="bg-[#111] p-6 rounded-2xl border border-white/5 flex items-start gap-5 hover:border-purple-500/30 transition-all group">
-                     <div className="p-4 bg-purple-900/20 rounded-xl text-purple-400 group-hover:text-purple-300 transition-colors">
-                        <Globe size={28} />
+
+                {/* PILAR 3: IMPACTO */}
+                <div className="group relative z-10 bg-[#0A0A0A] border border-white/10 p-8 rounded-2xl hover:border-purple-500/50 transition-all duration-500 hover:-translate-y-2">
+                    <div className="absolute inset-0 bg-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
+                    <div className="w-12 h-12 bg-[#111] border border-white/10 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+                        <Globe size={24} className="text-purple-400"/>
                     </div>
-                    <div>
-                        <h3 className="text-xl font-bold text-white mb-2">Impacto Real</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">Resolvemos problemas reais</p>
-                    </div>
+                    <h3 className="text-xl font-bold text-white mb-3 flex items-center gap-2">
+                        3. Solução Real
+                        <span className="text-[10px] font-mono text-purple-500 border border-purple-500/30 px-1.5 rounded">OUTPUT</span>
+                    </h3>
+                    <p className="text-sm text-gray-500 leading-relaxed">
+                        Entregamos clareza. Ferramentas que permitem a empresas e indivíduos navegar a complexidade económica com confiança matemática.
+                    </p>
                 </div>
+
             </div>
         </div>
       </section>
