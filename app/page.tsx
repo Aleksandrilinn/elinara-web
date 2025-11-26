@@ -142,8 +142,8 @@ export default function Home() {
                     <Sparkles size={12} /> O Nosso Manifesto
                 </div>
                 <h2 className="text-4xl md:text-5xl font-serif font-bold text-white italic leading-tight">
-                    Economia + <br/>
-                    <span className="text-blue-500 italic">Programação</span>
+                    Economia + Investigação + <br/>
+                    <span className="text-blue-500 italic">Programação + </span>
                 </h2>
                 <div className="space-y-3 text-gray-400 text-lg leading-relaxed font-light">
                     <p>
@@ -254,20 +254,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- FOOTER + IMPRESSUM --- */}
-      <footer className="py-20 text-center border-t border-white/5 bg-[#050505] relative">
+{/* --- FOOTER COM IMPRESSUM LEGAL --- */}
+      <footer className="py-20 text-center border-t border-white/5 bg-[#050505] relative z-10 mt-20">
         <div className="max-w-2xl mx-auto px-4 relative z-10">
-            <h3 className="text-2xl font-serif font-medium text-white mb-6">
-                Pronto para juntar teoria à partica?
-            </h3>
-            <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">
-                Estamos sempre à procura de problemas desafiantes para resolver.
-            </p>
+            <h3 className="text-2xl font-serif font-medium text-white mb-6">Pronto para desafiar a teoria?</h3>
+            <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">Estamos sempre à procura de problemas desafiantes para resolver.</p>
             
             <div className="flex justify-center gap-8 mb-12">
                 <a href="#" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Github size={16} /> GitHub</a>
                 <a href="#" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Linkedin size={16} /> LinkedIn</a>
-                <a href="mailto:ola@elinaralabs.com" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Mail size={16} /> Contacto</a>
+                <a href="mailto:aleksandr0799@hotmail.com" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Mail size={16} /> Contacto</a>
             </div>
             
             <div className="border-t border-white/5 pt-8">
@@ -281,22 +277,54 @@ export default function Home() {
                 >
                     <Scale size={12} /> Impressum / Legal Notice {showImpressum ? '▴' : '▾'}
                 </button>
+
                 {showImpressum && (
-                    <div className="text-left text-xs text-gray-500 max-w-md mx-auto bg-[#0a0a0a] p-6 rounded-xl border border-white/5 animate-fade-in">
-                        <h4 className="text-white mb-2 font-bold">Impressum (Angaben gemäß § 5 TMG)</h4>
-                        <p className="mb-4 italic">Elinara Labs is currently a pre-incorporation project/brand.</p>
+                    <div className="text-left text-xs text-gray-400 max-w-lg mx-auto bg-[#0a0a0a] p-8 rounded-xl border border-white/5 animate-fade-in shadow-2xl space-y-4 font-sans">
                         
-                        <p className="font-bold text-gray-400">Kontakt / Contact:</p>
-                        <p>Aleksandr Ilin</p>
-                        <p>[A tua morada completa na Alemanha]</p>
-                        <p>[Código Postal e Cidade]</p>
-                        <p>Germany</p>
-                        <p className="mt-2">Email: ola@elinaralabs.com</p>
-                        <p>Phone: [O teu número se quiseres por]</p>
-                        <p className="font-bold text-gray-400 mt-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:</p>
-                        <p>Aleksandr Ilin (Address above)</p>
-                        <p className="font-bold text-gray-400 mt-4">Disclaimer:</p>
-                        <p>The contents of our pages were created with great care. However, we cannot guarantee the contents' accuracy, completeness, or topicality. According to statutory provisions, we are furthermore responsible for our own content on these web pages.</p>
+                        {/* SECÇÃO 1: Identificação Obrigatória */}
+                        <div>
+                            <h4 className="text-white mb-2 font-bold border-b border-white/10 pb-1">Angaben gemäß § 5 TMG</h4>
+                            <p className="font-bold text-white">Aleksandr Ilin</p>
+                            <p className="text-gray-500 italic mb-1">Einzelunternehmer</p>
+                            <p>Lingstrasse, 8</p>
+                            <p>90443 Nuremberg</p>
+                            <p>Germany</p>
+                        </div>
+
+                        {/* SECÇÃO 2: Contacto Obrigatório */}
+                        <div>
+                            <h4 className="text-white mb-2 font-bold border-b border-white/10 pb-1 mt-4">Kontakt / Contact</h4>
+                            <p>Telefon: <span className="text-gray-300">+49 174 16 29 207</span></p>
+                            <p>E-Mail: <span className="text-gray-300">aleksandr0799@hotmail.com</span></p>
+                        </div>
+
+                        {/* SECÇÃO 3: IVA (Só preenches se tiveres, senão apaga este bloco) */}
+                        {/* <div>
+                            <h4 className="text-white mb-2 font-bold border-b border-white/10 pb-1 mt-4">Umsatzsteuer-ID</h4>
+                            <p>Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:</p>
+                            <p className="text-white font-mono">[DE 123 456 789]</p>
+                        </div>
+                        */}
+
+                        {/* SECÇÃO 4: Responsabilidade Editorial */}
+                        <div>
+                            <h4 className="text-white mb-2 font-bold border-b border-white/10 pb-1 mt-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h4>
+                            <p>Aleksandr Ilin</p>
+                            <p>Lingstrasse 8, 90443 Nuremberg</p>
+                        </div>
+
+                        {/* SECÇÃO 5: Resolução de Disputas (Obrigatório na UE) */}
+                        <div className="text-[10px] text-gray-600 mt-6 pt-4 border-t border-white/5">
+                            <p className="mb-2">
+                                <strong className="text-gray-500">EU Dispute Resolution:</strong><br/>
+                                The European Commission provides a platform for online dispute resolution (ODR): <a href="https://ec.europa.eu/consumers/odr/" target="_blank" className="underline hover:text-blue-400">https://ec.europa.eu/consumers/odr/</a>.<br/>
+                                We are not willing or obliged to participate in dispute resolution proceedings before a consumer arbitration board.
+                            </p>
+                            <p>
+                                <strong className="text-gray-500">Haftung für Inhalte (Liability):</strong><br/>
+                                As a service provider, we are responsible for our own content on these pages in accordance with Sec. 7, paragraph 1 TMG under general laws.
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
