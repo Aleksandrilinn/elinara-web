@@ -141,17 +141,17 @@ export default function Home() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-mono uppercase tracking-wider mb-4">
                     <Sparkles size={12} /> O Nosso Manifesto
                 </div>
-                <h2 className="text-4xl md:text-5xl font-serif font-bold text-white leading-tight">
-                    Não somos apenas codificadores. <br/>
-                    <span className="text-blue-500 italic">Somos economistas.</span>
+                <h2 className="text-4xl md:text-5xl font-serif font-bold text-white italic leading-tight">
+                    Economia+Programação <br/>
+                    <span className="text-blue-500 italic">Resolvemos Problemas</span>
                 </h2>
                 <div className="space-y-6 text-gray-400 text-lg leading-relaxed font-light">
                     <p>
-                        Acreditamos que a teoria económica contida nos papers da Scopus não deve ficar a ganhar pó nas bibliotecas.
+                        Somos curiosos, observamos o mundo, identificamos problemas, juntamos a teoria a pratica e desenvolvemos soluções reais para os problemas da humanidade. 
                     </p>
-                    <p>
-                        Na <strong>Elinara Labs</strong>, traduzimos equações complexas em linhas de código simples que empresas e governos possam usar hoje.
-                    </p>
+
+                        Na <strong>Elinara Labs</strong>, traduzimos equações em linhas de código que empresas, familias e governos utilizam para melhorar a sua vida.
+                    
                 </div>
             </div>
 
@@ -162,7 +162,7 @@ export default function Home() {
                     </div>
                     <div>
                         <h3 className="text-xl font-bold text-white mb-2">Rigor Académico</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">Soluções derivadas de teoria económica validada e comprovada.</p>
+                        <p className="text-sm text-gray-500 leading-relaxed">Soluções derivadas de teoria económica validada e comprovada</p>
                     </div>
                 </div>
                 <div className="bg-[#111] p-6 rounded-2xl border border-white/5 flex items-start gap-5 hover:border-green-500/30 transition-all group">
@@ -171,7 +171,7 @@ export default function Home() {
                     </div>
                     <div>
                         <h3 className="text-xl font-bold text-white mb-2">Engenharia Rápida</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">Python & AI para prototipar em dias, não anos. Vibe coding focado em resultados.</p>
+                        <p className="text-sm text-gray-500 leading-relaxed">Python & AI para prototipar em dias, com foco nos resultados</p>
                     </div>
                 </div>
                 <div className="bg-[#111] p-6 rounded-2xl border border-white/5 flex items-start gap-5 hover:border-purple-500/30 transition-all group">
@@ -180,7 +180,7 @@ export default function Home() {
                     </div>
                     <div>
                         <h3 className="text-xl font-bold text-white mb-2">Impacto Real</h3>
-                        <p className="text-sm text-gray-500 leading-relaxed">Resolvemos ineficiências de mercado reais, não criamos apenas "brinquedos" tecnológicos.</p>
+                        <p className="text-sm text-gray-500 leading-relaxed">Resolvemos problemas reais</p>
                     </div>
                 </div>
             </div>
