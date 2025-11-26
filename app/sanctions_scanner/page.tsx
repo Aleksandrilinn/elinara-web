@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Activity, AlertCircle, Terminal, TrendingDown, RefreshCcw, ChevronDown, Info, Scale } from 'lucide-react';
+import { ArrowLeft, Activity, AlertCircle, Terminal, TrendingDown, RefreshCcw, ChevronDown, Info, Scale, BarChart3 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart, Legend } from 'recharts';
 
 export default function SanctionsPage() {
@@ -9,7 +9,6 @@ export default function SanctionsPage() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
 
-  // Lista completa dos 15 Indicadores
   const indicators = [
     { value: 'GDP_CONST', label: 'GDP (Constant US$)', category: 'Growth' },
     { value: 'GDP_CUR', label: 'GDP (Current US$)', category: 'Growth' },
@@ -31,7 +30,7 @@ export default function SanctionsPage() {
   const handleCalculate = async () => {
     setLoading(true);
     setError('');
-    setData(null); // Limpar dados antigos enquanto carrega
+    setData(null);
     try {
       const res = await fetch(`/api/scm?indicator=${indicator}`);
       const text = await res.text();
@@ -52,7 +51,6 @@ export default function SanctionsPage() {
     }
   };
 
-  // Calcular sempre que muda o indicador
   useEffect(() => { handleCalculate(); }, [indicator]);
 
   const formatValue = (val: number) => {
@@ -123,45 +121,63 @@ export default function SanctionsPage() {
         {/* MAIN DASHBOARD */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto pb-20">
             
-            {/* LEFT: DONOR WEIGHTS */}
+            {/* LEFT: STATS & DONORS */}
             <div className="lg:col-span-4 space-y-6">
-                <div className="bg-[#0F0F0F] border border-white/10 p-6 rounded-2xl shadow-xl relative z-30 min-h-[300px]">
-                    <h3 className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-6 block flex items-center gap-2"><Scale size={14}/> Synthetic Composition</h3>
+                
+                {/* 1. DONOR WEIGHTS */}
+                <div className="bg-[#0F0F0F] border border-white/10 p-6 rounded-2xl shadow-xl relative z-30">
+                    <h3 className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-4 block flex items-center gap-2"><Scale size={14}/> Synthetic Composition</h3>
                     
                     {data ? (
-                        <div className="space-y-6">
-                            <div className="space-y-3">
-                                <p className="text-sm text-white font-bold">Top Donor Countries</p>
-                                <p className="text-xs text-gray-500 leading-relaxed">
-                                    The algorithm selected these countries to mathematically reconstruct Russia&apos;s pre-2022 trajectory:
-                                </p>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {data.contributors.length > 0 ? data.contributors.map((c: any) => (
-                                        <span key={c.country} className="px-2 py-1 bg-white/5 rounded text-xs font-mono border border-white/10 flex items-center gap-2">
-                                            <span className="text-gray-300">{c.country}</span>
-                                            <span className="text-red-400 font-bold">{c.weight}%</span>
-                                        </span>
-                                    )) : <span className="text-xs text-gray-600">No specific match found (Uniform distribution).</span>}
-                                </div>
-                            </div>
-
-                            <div className="p-4 bg-red-900/10 border border-red-500/20 rounded-xl">
-                                <p className="text-xs text-red-400 font-mono uppercase mb-1">Impact Gap (2023)</p>
-                                <p className="text-2xl font-bold text-white">{formatValue(data.metrics.gap_2023)}</p>
-                                <p className="text-[10px] text-gray-400 mt-1">Differential (Real vs Synthetic)</p>
+                        <div className="space-y-4">
+                            <p className="text-xs text-gray-500 leading-relaxed">
+                                The algorithm selected these countries to mathematically reconstruct Russia&apos;s pre-2022 trajectory:
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {data.contributors.length > 0 ? data.contributors.map((c: any) => (
+                                    <span key={c.country} className="px-2 py-1 bg-white/5 rounded text-xs font-mono border border-white/10 flex items-center gap-2">
+                                        <span className="text-gray-300">{c.country}</span>
+                                        <span className="text-red-400 font-bold">{c.weight}%</span>
+                                    </span>
+                                )) : <span className="text-xs text-gray-600">No specific match found (Uniform distribution).</span>}
                             </div>
                         </div>
-                    ) : !loading && !error && (
-                        <div className="text-xs text-gray-500 text-center pt-10">Select an indicator to start analysis.</div>
-                    )}
-                    
-                    {error && (
-                        <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
-                            <AlertCircle size={16} className="shrink-0 mt-0.5"/> 
-                            <span>{error}</span>
-                        </div>
-                    )}
+                    ) : !loading && !error && <div className="text-xs text-gray-500">Waiting for data...</div>}
                 </div>
+
+                {/* 2. MODEL STATISTICS */}
+                {data && (
+                    <div className="bg-[#0F0F0F] border border-white/10 p-6 rounded-2xl shadow-xl relative z-30">
+                        <h3 className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-4 block flex items-center gap-2"><BarChart3 size={14}/> Model Statistics</h3>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/5">
+                                <p className="text-[9px] text-gray-500 uppercase mb-1">Pre-War RMSPE</p>
+                                <p className="text-sm font-mono font-bold text-white" title="Lower is better">{formatValue(data.stats.pre_rmspe)}</p>
+                                <p className="text-[9px] text-gray-600 mt-1">Fit Quality (2010-21)</p>
+                            </div>
+                            <div className="p-3 bg-red-900/10 rounded-lg border border-red-500/20">
+                                <p className="text-[9px] text-red-400 uppercase mb-1">Post-War RMSPE</p>
+                                <p className="text-sm font-mono font-bold text-white">{formatValue(data.stats.post_rmspe)}</p>
+                                <p className="text-[9px] text-red-400/60 mt-1">Divergence (2022-24)</p>
+                            </div>
+                        </div>
+                        
+                        <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center">
+                            <span className="text-xs text-gray-400">Impact Ratio:</span>
+                            <span className={`text-sm font-mono font-bold ${data.stats.ratio > 2 ? 'text-red-400' : 'text-gray-300'}`}>
+                                {data.stats.ratio.toFixed(2)}x
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {error && (
+                    <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-start gap-2">
+                        <AlertCircle size={16} className="shrink-0 mt-0.5"/> 
+                        <span>{error}</span>
+                    </div>
+                )}
             </div>
 
             {/* RIGHT: CHART */}
@@ -177,7 +193,7 @@ export default function SanctionsPage() {
                     )}
                 </div>
 
-                <div className="h-[400px] w-full">
+                <div className="h-[350px] w-full">
                     {data ? (
                         <ResponsiveContainer width="100%" height="100%">
                             <ComposedChart data={data.data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -190,7 +206,7 @@ export default function SanctionsPage() {
                                     formatter={(value: any) => [formatValue(value), '']}
                                     labelStyle={{ color: '#888' }}
                                 />
-                                <ReferenceLine x={2022} stroke="white" strokeDasharray="3 3" label={{ value: 'Sanctions (2022)', position: 'insideTopLeft', fill: 'white', fontSize: 10, opacity: 0.5 }} />
+                                <ReferenceLine x={2022} stroke="white" strokeDasharray="3 3" label={{ value: 'Sanctions', position: 'insideTopLeft', fill: 'white', fontSize: 10, opacity: 0.5 }} />
                                 
                                 <Line type="monotone" dataKey="Synthetic" stroke="#666" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={false} />
                                 <Line type="monotone" dataKey="Real" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, fill: '#ef4444', strokeWidth: 0 }} />
@@ -198,14 +214,20 @@ export default function SanctionsPage() {
                         </ResponsiveContainer>
                     ) : (
                         <div className="h-full w-full flex items-center justify-center text-gray-700 text-sm font-mono">
-                            {loading ? "Connecting to World Bank API..." : "Waiting for data..."}
+                            {loading ? "Running Optimization Algorithm..." : "Waiting for data..."}
                         </div>
                     )}
                 </div>
                 
-                <div className="mt-4 flex items-start gap-2 text-[10px] text-gray-600 font-mono bg-black/20 p-3 rounded border border-white/5">
-                    <Info size={12} className="mt-0.5"/>
-                    <p>Data sourced live from World Bank API (2010-2023). The Synthetic Russia is constructed by minimizing the RMSPE between Real Russia and the donor pool in the pre-war period (2010-2021).</p>
+                {/* HOW TO READ THIS */}
+                <div className="mt-6 p-4 bg-black/20 rounded-xl border border-white/5">
+                    <h4 className="text-xs font-bold text-gray-300 mb-2 flex items-center gap-2"><Info size={12}/> How to read this chart:</h4>
+                    <ul className="text-[10px] text-gray-500 space-y-1 list-disc pl-4 leading-relaxed">
+                        <li>The <strong>Grey Line (Synthetic)</strong> shows how Russia's economy <em>would have performed</em> without sanctions (based on the donor countries).</li>
+                        <li>The <strong>Red Line (Real)</strong> is the actual observed data.</li>
+                        <li>The gap after 2022 represents the <strong>causal impact</strong> of the sanctions/war.</li>
+                        <li><strong>Pre-War RMSPE:</strong> A low value means the Synthetic Russia is a very good "clone" of the real one before the war (High reliability).</li>
+                    </ul>
                 </div>
             </div>
         </div>

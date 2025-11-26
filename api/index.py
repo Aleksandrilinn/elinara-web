@@ -65,7 +65,8 @@ def _get_metric(df, key, fallback=[], idx=0):
 def fetch_wb_data(indicator_code):
     """Busca dados ao Banco Mundial com tratamento de erros robusto."""
     countries = ";".join([TARGET_COUNTRY] + DONOR_POOL)
-    url = f"http://api.worldbank.org/v2/country/{countries}/indicator/{indicator_code}?format=json&per_page=5000&date=2010:2023"
+    # ATUALIZAÇÃO: Agora pede dados até 2024
+    url = f"http://api.worldbank.org/v2/country/{countries}/indicator/{indicator_code}?format=json&per_page=5000&date=2010:2024"
     
     try:
         r = requests.get(url, timeout=10)
@@ -162,14 +163,18 @@ def calculate_scm(indicator: str = "GDP_CONST"):
         # 3. Otimização Manual
         weights = optimize_weights_manual(X0, X1)
 
-        # 4. Projetar Resultados (2010-2023)
+        # 4. Projetar Resultados (2010-2024)
         Y_donors = df[available_donors].values
         synth_values = np.dot(Y_donors, weights)
         
-        # 5. Formatar Resposta
+        # 5. Formatar Resposta e Estatísticas
         chart_data = []
         metrics = {"gap_2022": 0, "gap_2023": 0}
         
+        # Listas para calcular RMSPE
+        pre_errors = []
+        post_errors = []
+
         for i, year in enumerate(df.index):
             real = df.iloc[i]["RUS"]
             synth = synth_values[i]
@@ -184,6 +189,24 @@ def calculate_scm(indicator: str = "GDP_CONST"):
             
             if year == 2022: metrics["gap_2022"] = gap
             if year == 2023: metrics["gap_2023"] = gap
+            
+            # Acumular erros para RMSPE
+            if year < 2022:
+                pre_errors.append(gap**2)
+            else:
+                post_errors.append(gap**2)
+
+        # Cálculo Estatístico (RMSPE - Root Mean Squared Prediction Error)
+        # Usamos a raiz quadrada para voltar à unidade original (ex: Dólares ou %)
+        pre_rmspe = np.sqrt(np.mean(pre_errors)) if pre_errors else 0
+        post_rmspe = np.sqrt(np.mean(post_errors)) if post_errors else 0
+        rmspe_ratio = post_rmspe / pre_rmspe if pre_rmspe > 0 else 0
+
+        stats = {
+            "pre_rmspe": pre_rmspe,
+            "post_rmspe": post_rmspe,
+            "ratio": rmspe_ratio
+        }
 
         contributors = sorted(
             [{"country": c, "weight": round(w*100, 1)} for c, w in zip(available_donors, weights) if w > 0.01],
@@ -194,6 +217,7 @@ def calculate_scm(indicator: str = "GDP_CONST"):
         return {
             "data": chart_data,
             "metrics": metrics,
+            "stats": stats, # Novas estatísticas
             "contributors": contributors,
             "indicator": indicator
         }
