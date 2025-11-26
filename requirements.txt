@@ -4,8 +4,7 @@ yfinance>=0.2.40
 pandas
 numpy
 requests
+scipy
 curl_cffi
 lxml
-scipy
-scikit-learn
-statsmodels
+httpx
