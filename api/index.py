@@ -236,6 +236,7 @@ def search(q: str):
     except: return []
 
 # --- ROTA 3: DCF ENGINE ---
+# --- ROTA 3: DCF ENGINE ---
 @app.get("/api/dcf")
 def dcf(ticker: str, g1: float=0.075, g2: float=0.025, wacc: float=0.09, 
         manual_ebit: float=None, manual_capex: float=None, manual_da: float=None, 
@@ -263,7 +264,20 @@ def dcf(ticker: str, g1: float=0.075, g2: float=0.025, wacc: float=0.09,
             rev = _get_metric(income, 'Total Revenue'); exp = _get_metric(income, 'Operating Expense')
             if rev > 0: ebit = rev - exp
 
-        tax_rate = manual_tax if manual_tax is not None else 0.21
+        # --- TAXA EFETIVA AUTOMÁTICA ---
+        # Se o utilizador não inseriu nada, calculamos a taxa real paga pela empresa
+        if manual_tax is not None:
+            tax_rate = manual_tax
+        else:
+            tax_prov = _get_metric(income, 'Tax Provision')
+            pretax_inc = _get_metric(income, 'Pretax Income')
+            if pretax_inc > 0:
+                effective_rate = tax_prov / pretax_inc
+                # Validar se a taxa é realista (entre 0% e 50%), senão usa 21%
+                tax_rate = effective_rate if 0 <= effective_rate <= 0.50 else 0.21
+            else:
+                tax_rate = 0.21
+
         nopat = ebit * (1 - tax_rate)
         da = manual_da if manual_da is not None else _get_metric(cashflow, 'Depreciation And Amortization')
         capex = abs(manual_capex if manual_capex is not None else _get_metric(cashflow, 'Capital Expenditure'))

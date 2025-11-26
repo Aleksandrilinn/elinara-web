@@ -296,8 +296,8 @@ export default function Home() {
             <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-600/10 rounded-full blur-[60px] group-hover:bg-purple-600/20 transition-all"></div>
           </a>
 
-          {/* 4. SanctionDelta */}
-          <div className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-red-500/50 transition-all cursor-not-allowed overflow-hidden">
+          {/* 4. SanctionDelta - AGORA CLICÁVEL */}
+          <a href="/sanctions_scanner" className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-red-500/50 transition-all cursor-pointer overflow-hidden block">
             <div className="absolute top-4 right-4">
               <span className="px-3 py-1 text-xs font-mono rounded bg-gray-800 text-gray-400 border border-gray-700">
                 CONCEPT
@@ -316,8 +316,8 @@ export default function Home() {
                         Applies the Synthetic Control Method (SCM) to measure the differential (Δ) between Russia&apos;s real indicators and a non-sanctioned &apos;Synthetic Russia&apos;.
                     </p>
                 </div>
-                <div className="mt-4 text-xs font-mono text-gray-600 flex items-center gap-1">
-                    <span className="animate-pulse">●</span> In Conceptualization
+                <div className="mt-4 text-xs font-mono text-red-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Open Tool <ArrowRight size={12}/>
                 </div>
                 <div className="flex gap-3 mt-6">
                  <SiPython className="text-gray-500 hover:text-white transition-colors" size={20}/>
@@ -326,7 +326,7 @@ export default function Home() {
               </div>
             </div>
             <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-red-900/10 rounded-full blur-[80px] group-hover:bg-red-900/20 transition-all"></div>
-          </div>
+          </a>
 
         </div>
       </section>

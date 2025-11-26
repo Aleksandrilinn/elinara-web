@@ -67,7 +67,8 @@ export default function DCFPage() {
       let url = `/api/dcf?ticker=${ticker}&g1=${g1/100}&wacc=${wacc/100}&g2=${g2/100}`;
       
       if (useCurrentInputs && hasLoaded) {
-        url += `&manual_ebit=${inputs.ebit}&manual_tax_rate=${inputs.tax_rate}&manual_da=${inputs.d_and_a}&manual_capex=${inputs.capex}&manual_nwc=${inputs.change_nwc}`;
+        // FIXED: Param name 'manual_tax_rate' changed to 'manual_tax' to match backend
+        url += `&manual_ebit=${inputs.ebit}&manual_tax=${inputs.tax_rate}&manual_da=${inputs.d_and_a}&manual_capex=${inputs.capex}&manual_nwc=${inputs.change_nwc}`;
         url += `&manual_cash=${inputs.total_cash}&manual_debt=${inputs.total_debt}&manual_shares=${inputs.shares}`;
       }
 
@@ -184,7 +185,7 @@ export default function DCFPage() {
                             <ArrowRight size={10} className="text-gray-600 group-hover:text-blue-400 -rotate-45 transition-colors"/>
                         </a>
 
-                        {/* LINK 2: */}
+                        {/* LINK 2 */}
                         <a 
                             href="https://www.sciencedirect.com/science/article/pii/S0167668715303279" 
                             target="_blank" 
