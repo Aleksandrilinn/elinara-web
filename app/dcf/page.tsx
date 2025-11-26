@@ -157,17 +157,49 @@ export default function DCFPage() {
             </div>
         </div>
 
-        {/* BLUEPRINT TEÓRICO */}
+{/* BLUEPRINT TEÓRICO */}
         <div className="mb-12 flex justify-center">
             <div className="w-fit mx-auto relative rounded-2xl bg-[#080808] border border-white/10 overflow-hidden hidden md:block shadow-2xl">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
                 <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none"></div>
-                <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between relative z-10 bg-black/20 backdrop-blur-sm">
+                
+                {/* CABEÇALHO COM DOIS LINKS (PDF + PAPER) */}
+                <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between relative z-10 bg-black/20 backdrop-blur-sm gap-12">
                     <div className="flex items-center gap-2">
                         <BookOpen size={14} className="text-blue-500"/>
                         <span className="text-xs font-mono uppercase tracking-wider text-gray-300">Arquitetura do Modelo (FCFF)</span>
                     </div>
+
+                    {/* --- ZONA DOS BOTÕES DE FONTE --- */}
+                    <div className="flex items-center gap-2">
+                        
+                        {/* BOTÃO 1: LINK PARA O PDF LOCAL (Manual) */}
+                        <a 
+                            href="/dcf_source.pdf" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all cursor-pointer group"
+                            title="Abrir Manual PDF"
+                        >
+                            <span className="text-[9px] font-mono text-gray-500 group-hover:text-blue-400 uppercase tracking-widest">Source 1</span>
+                            <ArrowRight size={10} className="text-gray-600 group-hover:text-blue-400 -rotate-45 transition-colors"/>
+                        </a>
+
+                        {/* BOTÃO 2: LINK PARA O SCIENCE DIRECT (Paper) */}
+                        <a 
+                            href="https://www.sciencedirect.com/science/article/pii/S0167668715303279" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all cursor-pointer group"
+                            title="Ler Artigo no ScienceDirect"
+                        >
+                            <span className="text-[9px] font-mono text-gray-500 group-hover:text-green-400 uppercase tracking-widest">Source 2</span>
+                            <ArrowRight size={10} className="text-gray-600 group-hover:text-green-400 -rotate-45 transition-colors"/>
+                        </a>
+
+                    </div>
                 </div>
+
                 <div className="p-8 overflow-x-auto scrollbar-hide relative z-10">
                     <div className="flex items-center justify-center min-w-max gap-2">
                         <GlowBlock label="EBIT" sub="Operacional" color="white" />
