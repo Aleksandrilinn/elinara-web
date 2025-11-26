@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { motion } from 'framer-motion';
 // Ícones
-import { Github, Linkedin, Mail, ArrowRight, Database, Zap, Code2, Sparkles, Brain, Globe, Scale, DollarSign } from 'lucide-react';
+import { Github, Linkedin, Mail, ArrowRight, Database, Zap, Code2, Sparkles, Brain, Globe, Scale, DollarSign, Rocket } from 'lucide-react';
 import { SiPython, SiStreamlit } from "react-icons/si";
 
 export default function Home() {
@@ -236,14 +236,29 @@ export default function Home() {
             </div>
           </a>
 
-          {/* Scraper */}
-          <div className="group relative md:col-span-1 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-pink-500/50 transition-all cursor-default">
-             <div className="flex flex-col h-full justify-end">
-              <Database className="text-gray-600 group-hover:text-pink-500 transition-colors mb-4" size={24}/>
-              <h3 className="text-xl font-bold text-white mb-1">Data Scraper</h3>
-              <p className="text-gray-400 text-xs">Automator INE & Scopus.</p>
+          {/* VC Simulator (ROXO */}
+          <a href="/vc" className="group relative md:col-span-1 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-purple-500/50 transition-all cursor-pointer block">
+             <div className="absolute top-4 right-4">
+               <span className="px-3 py-1 text-xs font-mono rounded bg-purple-900/30 text-purple-400 border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
+                 NEW
+               </span>
+             </div>
+             <div className="flex flex-col h-full justify-between">
+              <div>
+                  <div className="mb-4 text-purple-500 group-hover:text-white transition-colors">
+                    <Rocket size={32}/>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">VC Simulator</h3>
+                  <p className="text-gray-400 text-xs leading-relaxed">
+                    Avaliação "Top-Down" para startups.
+                  </p>
+              </div>
+              <div className="mt-4 text-xs font-mono text-purple-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                Abrir Ferramenta <ArrowRight size={12}/>
+              </div>
             </div>
-          </div>
+            <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-600/10 rounded-full blur-[60px] group-hover:bg-purple-600/20 transition-all"></div>
+          </a>
 
           {/* Chronos */}
           <div className="group relative md:col-span-2 row-span-1 rounded-2xl bg-gradient-to-r from-gray-900 to-black border border-white/10 p-8 flex items-center justify-center cursor-not-allowed">

@@ -3,10 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 import yfinance as yf
 import pandas as pd
 import requests
+import datetime
 
 app = FastAPI()
 
-# Configuração CORS (Segurança)
+# Configuração CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Funções Auxiliares
+# --- FUNÇÕES AUXILIARES (DO DCF) ---
 def _get_metric(df, key, fallback=[], idx=0):
     keys = [key] + fallback
     if df is None or df.empty: return 0.0
@@ -27,10 +28,10 @@ def _get_metric(df, key, fallback=[], idx=0):
             except: pass
     return 0.0
 
+# --- ROTAS DO DCF EXISTENTE ---
 @app.get("/api/search")
 def search(q: str):
     try:
-        # Usamos requests simples aqui porque a API de search é mais permissiva
         headers = {'User-Agent': 'Mozilla/5.0'}
         url = f"https://query1.finance.yahoo.com/v1/finance/search?q={q}&quotesCount=5&newsCount=0"
         r = requests.get(url, headers=headers, timeout=5)
@@ -54,42 +55,27 @@ def dcf(ticker: str, g1: float=0.075, g2: float=0.025, wacc: float=0.09,
         manual_cash: float=None, manual_debt: float=None, manual_shares: float=None):
     try:
         ticker = ticker.upper().strip()
-        
-        # --- AQUI ESTAVA O ERRO ANTES ---
-        # Removemos o "session=session". O yfinance gere isso sozinho agora.
         stock = yf.Ticker(ticker)
         
-        # Teste de conexão
-        try:
-            hist = stock.history(period="1d")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Erro de conexão Yahoo: {str(e)}")
+        try: hist = stock.history(period="1d")
+        except Exception as e: raise HTTPException(status_code=500, detail=f"Erro Yahoo: {str(e)}")
 
         if hist.empty:
-            # Tentar mais uma vez caso seja um glitch momentâneo
             hist = stock.history(period="5d")
-            if hist.empty:
-                raise HTTPException(status_code=404, detail=f"Ticker '{ticker}' não encontrado ou sem dados.")
+            if hist.empty: raise HTTPException(status_code=404, detail="Ticker não encontrado.")
             
         price = float(hist["Close"].iloc[-1])
         
-        # Tenta extrair dados com segurança
         try:
             info = stock.info or {}
             income = stock.income_stmt
             cashflow = stock.cashflow
             balance = stock.balance_sheet
         except:
-            # Se falhar a sacar balanços, cria vazios para permitir input manual
-            income = pd.DataFrame()
-            cashflow = pd.DataFrame()
-            balance = pd.DataFrame()
-            info = {}
+            income = pd.DataFrame(); cashflow = pd.DataFrame(); balance = pd.DataFrame(); info = {}
 
-        # --- LÓGICA DCF ---
+        # Lógica simplificada do DCF para poupar espaço (usa a mesma lógica que já tinhas)
         ebit = manual_ebit if manual_ebit is not None else _get_metric(income, 'Ebit', ['Operating Income', 'EBIT'])
-        
-        # Fallback de emergência para EBIT
         if ebit == 0 and manual_ebit is None:
             rev = _get_metric(income, 'Total Revenue')
             op_exp = _get_metric(income, 'Operating Expense')
@@ -100,16 +86,12 @@ def dcf(ticker: str, g1: float=0.075, g2: float=0.025, wacc: float=0.09,
         tax_rate = manual_tax if manual_tax is not None else ((tax_prov / pretax) if pretax > 0 else 0.21)
         
         nopat = ebit * (1 - tax_rate)
-        
         da = manual_da if manual_da is not None else _get_metric(cashflow, 'Depreciation And Amortization')
-        capex = manual_capex if manual_capex is not None else _get_metric(cashflow, 'Capital Expenditure')
-        capex = abs(capex) 
-        
+        capex = abs(manual_capex if manual_capex is not None else _get_metric(cashflow, 'Capital Expenditure'))
         nwc = manual_nwc if manual_nwc is not None else 0.0
         
         fcf_base = nopat + da - capex - nwc
         
-        # Projeções
         projections = []
         fcf = fcf_base
         pv_sum = 0.0
@@ -126,10 +108,8 @@ def dcf(ticker: str, g1: float=0.075, g2: float=0.025, wacc: float=0.09,
         pv_term = term_val / ((1 + wacc) ** 5)
         
         enterprise_value = pv_sum + pv_term
-        
         cash = manual_cash if manual_cash is not None else _get_metric(balance, 'Cash And Cash Equivalents')
         debt = manual_debt if manual_debt is not None else _get_metric(balance, 'Total Debt')
-        
         shares = manual_shares if manual_shares is not None else info.get('sharesOutstanding', 1)
         if not shares or shares == 0: shares = 1
         
@@ -137,25 +117,79 @@ def dcf(ticker: str, g1: float=0.075, g2: float=0.025, wacc: float=0.09,
         intrinsic = equity / shares
         
         return {
-            "ticker": ticker,
-            "price": price,
-            "currency": info.get('currency', 'USD'),
-            "intrinsic_value": intrinsic,
-            "margin": (intrinsic - price) / price,
-            "inputs": {
-                "ebit": ebit, "tax_rate": tax_rate, "d_and_a": da, "capex": capex, "change_nwc": nwc,
-                "total_cash": cash, "total_debt": debt, "shares": shares
-            },
-            "valuation_flow": {
-                "pv_projections": pv_sum, "pv_terminal": pv_term, "enterprise_value": enterprise_value,
-                "total_cash": cash, "total_debt": debt, "equity_value": equity, "shares": shares
-            },
-            "metrics": { "nopat": nopat, "fcf_base": fcf_base },
-            "breakdown": breakdown
+            "ticker": ticker, "price": price, "currency": info.get('currency', 'USD'),
+            "intrinsic_value": intrinsic, "margin": (intrinsic - price) / price,
+            "inputs": { "ebit": ebit, "tax_rate": tax_rate, "d_and_a": da, "capex": capex, "change_nwc": nwc, "total_cash": cash, "total_debt": debt, "shares": shares },
+            "valuation_flow": { "pv_projections": pv_sum, "pv_terminal": pv_term, "enterprise_value": enterprise_value, "total_cash": cash, "total_debt": debt, "equity_value": equity, "shares": shares },
+            "metrics": { "nopat": nopat, "fcf_base": fcf_base }, "breakdown": breakdown
         }
-
-    except HTTPException as he:
-        raise he
     except Exception as e:
-        print(f"Server Error: {e}")
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- NOVA ROTA: VENTURE CAPITAL CALCULATOR ---
+@app.get("/api/vc")
+def vc_calc(
+    tam: float, quota: float, margem: float, multiplo: float, 
+    desconto: float, diluicao: float, target_year: int,
+    acoes_atuais: float, caixa_atual: float, burn_anual: float
+):
+    try:
+        # 1. Parâmetros Temporais
+        ano_atual = datetime.datetime.now().year
+        anos_projecao = target_year - ano_atual
+        if anos_projecao <= 0: anos_projecao = 1 # Evitar divisão por zero
+
+        # 2. Conversões
+        quota_pct = quota / 100.0
+        margem_pct = margem / 100.0
+        desconto_pct = desconto / 100.0
+        diluicao_pct = diluicao / 100.0
+
+        # 3. Lógica VC (Top-Down)
+        receita_alvo = tam * quota_pct
+        nopat_alvo = receita_alvo * margem_pct
+        
+        # Valor de Saída (Exit)
+        exit_value = nopat_alvo * multiplo
+        
+        # Valor Presente (PV)
+        pv_equity = exit_value / ((1 + desconto_pct) ** anos_projecao)
+        
+        # Diluição
+        acoes_futuras = acoes_atuais * ((1 + diluicao_pct) ** anos_projecao)
+        
+        # Preço Alvo
+        target_price = pv_equity / acoes_futuras
+        price_no_dilution = pv_equity / acoes_atuais
+
+        # 4. Análise de Sobrevivência (Runway)
+        if burn_anual <= 0:
+            runway = 99.0
+            runway_status = "safe"
+        else:
+            runway = caixa_atual / burn_anual
+            if runway < 1.0: runway_status = "danger"
+            elif runway < 2.0: runway_status = "warning"
+            else: runway_status = "safe"
+
+        return {
+            "metrics": {
+                "receita_alvo": receita_alvo,
+                "nopat_alvo": nopat_alvo,
+                "exit_value": exit_value,
+                "pv_equity": pv_equity,
+                "acoes_futuras": acoes_futuras,
+                "target_price": target_price,
+                "price_no_dilution": price_no_dilution,
+                "years_to_exit": anos_projecao
+            },
+            "survival": {
+                "runway": runway,
+                "status": runway_status,
+                "burn": burn_anual,
+                "cash": caixa_atual
+            }
+        }
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
