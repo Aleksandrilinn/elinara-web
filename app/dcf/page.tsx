@@ -133,7 +133,7 @@ export default function DCFPage() {
         {/* CABEÇALHO */}
         <div className="text-center mb-10 w-full">
              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-mono uppercase tracking-widest mb-6">
-                <Terminal size={10} /> System v4.3 Online
+                <Terminal size={10} /> Protótipo V.01
             </div>
             
             <h1 className="text-5xl md:text-7xl font-sans font-black tracking-tighter uppercase leading-none text-white mb-6 flex items-center justify-center gap-4">
@@ -143,8 +143,7 @@ export default function DCFPage() {
             
             <div className="space-y-4 text-gray-400 text-sm md:text-base font-light leading-relaxed max-w-3xl mx-auto">
                 <p>
-                    Na <strong className="text-white">Elinara Labs</strong>, construimos soluções práticas. 
-                    Esta ferramenta é a materialização do algoritmo <em>Discounted Cash Flow</em>.
+                    Um modelo central da teoria financeira demonstra o nosso propósito: converter modelos teóricos em soluções práticas. Esta ferramenta recolhe dados diretamente do Yahoo Finance e permite estimar o valor intrínseco de uma empresa para apoiar decisões reais de investimento.
                 </p>
             </div>
 
