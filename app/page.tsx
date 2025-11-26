@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState } from 'react';
 import { TypeAnimation } from 'react-type-animation';
 import { motion } from 'framer-motion';
@@ -63,7 +62,6 @@ export default function Home() {
                            <Code2 size={12}/> logic.py
                         </span>
                     </div>
-
                     <div className="p-6 flex flex-col h-full">
                         {/* ÁREA DE TEXTO: Altura fixa e espaçamento normal para não invadir o gráfico */}
                         <div className="text-gray-300 leading-normal h-[200px] mb-2">
@@ -94,7 +92,6 @@ export default function Home() {
                                 className="text-blue-300"
                             />
                         </div>
-
                         {/* ÁREA DO GRÁFICO: Fixada na base */}
                         <div className="mt-auto pt-4 border-t border-dashed border-white/10">
                             <div className="flex justify-between items-center mb-2">
@@ -135,7 +132,6 @@ export default function Home() {
             </div>
         </div>
       </section>
-
 
       {/* --- MANIFESTO RENOVADO --- */}
       <section id="about" className="py-32 px-4 bg-[#0A0A0A] border-y border-white/5">
@@ -191,14 +187,13 @@ export default function Home() {
         </div>
       </section>
 
-
       {/* --- PROJETOS (Bento Grid) --- */}
       <section id="projects" className="py-32 px-4 md:px-8 max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold mb-12 border-l-4 border-blue-500 pl-4 flex items-center gap-4">
             Projetos & Protocolos
             <span className="text-xs font-mono font-normal text-gray-500 px-2 py-1 bg-white/5 rounded border border-white/5">v1.0.6</span>
         </h2>
-
+        
         <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[600px]">
           {/* Elastic */}
           <div className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-blue-500/50 transition-all overflow-hidden cursor-default">
@@ -286,7 +281,6 @@ export default function Home() {
                 >
                     <Scale size={12} /> Impressum / Legal Notice {showImpressum ? '▴' : '▾'}
                 </button>
-
                 {showImpressum && (
                     <div className="text-left text-xs text-gray-500 max-w-md mx-auto bg-[#0a0a0a] p-6 rounded-xl border border-white/5 animate-fade-in">
                         <h4 className="text-white mb-2 font-bold">Impressum (Angaben gemäß § 5 TMG)</h4>
@@ -299,10 +293,8 @@ export default function Home() {
                         <p>Germany</p>
                         <p className="mt-2">Email: ola@elinaralabs.com</p>
                         <p>Phone: [O teu número se quiseres por]</p>
-
                         <p className="font-bold text-gray-400 mt-4">Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:</p>
                         <p>Aleksandr Ilin (Address above)</p>
-
                         <p className="font-bold text-gray-400 mt-4">Disclaimer:</p>
                         <p>The contents of our pages were created with great care. However, we cannot guarantee the contents' accuracy, completeness, or topicality. According to statutory provisions, we are furthermore responsible for our own content on these web pages.</p>
                     </div>
@@ -310,7 +302,6 @@ export default function Home() {
             </div>
         </div>
       </footer>
-
     </main>
   );
 }
