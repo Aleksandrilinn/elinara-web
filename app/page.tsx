@@ -137,7 +137,7 @@ export default function Home() {
       <section id="about" className="py-32 px-4 bg-[#0A0A0A] border-y border-white/5">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             
-            <div className="space-y-8">
+            <div className="space-y-5">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-xs font-mono uppercase tracking-wider mb-4">
                     <Sparkles size={12} /> O Nosso Manifesto
                 </div>
@@ -145,7 +145,7 @@ export default function Home() {
                     Economia+Programação <br/>
                     <span className="text-blue-500 italic">Resolvemos Problemas</span>
                 </h2>
-                <div className="space-y-6 text-gray-400 text-lg leading-relaxed font-light">
+                <div className="space-y-3 text-gray-400 text-lg leading-relaxed font-light">
                     <p>
                         Somos curiosos, observamos o mundo, identificamos problemas, juntamos a teoria a pratica e desenvolvemos soluções reais para os problemas da humanidade. 
                     </p>
