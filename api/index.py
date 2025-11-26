@@ -1,9 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import numpy as np
 import yfinance as yf
 import pandas as pd
 import requests
 import datetime
+from scipy.optimize import minimize
 
 app = FastAPI()
 
@@ -193,3 +195,177 @@ def vc_calc(
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+# --- 1. LISTA DE PAÍSES (A TUA LISTA DA TESE) ---
+# Convertido para ISO Alpha-2 Codes
+TARGET_COUNTRY = "RU" # Rússia
+DONOR_POOL = [
+    "SA", # Arábia Saudita
+    "ID", # Indonésia
+    "AO", # Angola
+    "AZ", # Azerbaijão
+    "AU", # Austrália
+    "BR", # Brasil
+    "AR", # Argentina
+    "TR", # Turquia
+    "CO", # Colômbia
+    "AM", # Arménia
+    "EC", # Equador
+    "CL", # Chile
+    "MY", # Malásia
+    "IN"  # Índia
+]
+
+# --- 2. OS 15 INDICADORES (Códigos do Banco Mundial) ---
+INDICATORS = {
+    "GDP_CONST": "NY.GDP.MKTP.KD",       # PIB (US$ Constante)
+    "GDP_CUR": "NY.GDP.MKTP.CD",         # PIB (US$ Atual)
+    "GDP_PC": "NY.GDP.PCAP.KD",          # PIB per Capita
+    "GDP_GROWTH": "NY.GDP.MKTP.KD.ZG",   # Crescimento do PIB %
+    "INFLATION": "FP.CPI.TOTL.ZG",       # Inflação
+    "UNEMPLOYMENT": "SL.UEM.TOTL.ZS",    # Desemprego
+    "EXPORTS": "NE.EXP.GNFS.KD",         # Exportações
+    "IMPORTS": "NE.IMP.GNFS.KD",         # Importações
+    "FDI_IN": "BX.KLT.DINV.WD.GD.ZS",    # Investimento Direto Estrangeiro (Entrada)
+    "RESERVES": "FI.RES.TOTL.CD",        # Reservas Totais
+    "GNI": "NY.GNP.MKTP.KD",             # Rendimento Nacional Bruto
+    "IND_VAL": "NV.IND.TOTL.KD",         # Valor Acrescentado Indústria
+    "AGR_VAL": "NV.AGR.TOTL.KD",         # Valor Acrescentado Agricultura
+    "TRADE_GDP": "NE.TRD.GNFS.ZS",       # Comércio (% do PIB)
+    "EXCH_RATE": "PA.NUS.FCRF"           # Taxa de Câmbio Oficial
+}
+
+def fetch_wb_data(indicator_code):
+    """Busca dados ao Banco Mundial com tratamento de erros robusto"""
+    # Pedimos dados desde 2010 até 2023
+    countries = ";".join([TARGET_COUNTRY] + DONOR_POOL)
+    url = f"http://api.worldbank.org/v2/country/{countries}/indicator/{indicator_code}?format=json&per_page=5000&date=2010:2023"
+    
+    try:
+        r = requests.get(url, timeout=15) # Aumentei o timeout para 15s
+        data = r.json()
+        
+        if not data or len(data) < 2: return None
+        
+        records = []
+        for entry in data[1]:
+            if entry['value'] is not None:
+                # Mapear códigos ISO3 (ex: RUS) para ISO2 (ex: RU) se necessário, 
+                # mas a API devolve ISO3. Vamos simplificar usando o que vem.
+                records.append({
+                    "country": entry['countryiso3code'],
+                    "year": int(entry['date']),
+                    "value": float(entry['value'])
+                })
+        
+        df = pd.DataFrame(records)
+        if df.empty: return None
+        
+        # Pivotar: Linhas=Anos, Colunas=Países
+        pivot_df = df.pivot(index="year", columns="country", values="value")
+        
+        # TRUQUE IMPORTANTE: Remover países que tenham dados em falta (NaN)
+        # Isto evita que o modelo falhe se Angola não tiver dados para FDI, por exemplo.
+        pivot_df = pivot_df.dropna(axis=1)
+        
+        return pivot_df.sort_index()
+    except Exception as e:
+        print(f"WB API Error: {e}")
+        return None
+
+# --- ROTA DE CÁLCULO SCM ---
+@app.get("/api/scm")
+def calculate_scm(indicator: str = "GDP_CONST"):
+    try:
+        wb_code = INDICATORS.get(indicator, "NY.GDP.MKTP.KD")
+        
+        # 1. Obter Dados
+        df = fetch_wb_data(wb_code)
+        
+        # Verificar se temos a Rússia (RUS) e pelo menos 2 dadores
+        if df is None or "RUS" not in df.columns:
+            raise HTTPException(status_code=404, detail="Dados indisponíveis para este indicador (WB API).")
+            
+        available_donors = [c for c in df.columns if c != "RUS"]
+        if len(available_donors) < 2:
+             raise HTTPException(status_code=400, detail="Dadores insuficientes com dados completos para este indicador.")
+
+        # 2. Preparar Matrizes (2010-2021 = Treino)
+        pre_years = [y for y in df.index if y < 2022]
+        
+        if len(pre_years) < 5:
+             raise HTTPException(status_code=400, detail="Histórico insuficiente para calibração.")
+
+        X0 = df.loc[pre_years, available_donors].values # Dadores (Matriz)
+        X1 = df.loc[pre_years, "RUS"].values            # Rússia (Vetor)
+
+        # 3. Otimização (Encontrar Pesos)
+        n_donors = len(available_donors)
+        
+        # Função de perda: Diferença quadrática entre RU e Sintético no passado
+        def loss(W):
+            return np.sum((X1 - np.dot(X0, W))**2)
+
+        # Restrições: Soma dos pesos = 1, Pesos >= 0
+        constraints = ({'type': 'eq', 'fun': lambda W: np.sum(W) - 1})
+        bounds = [(0, 1) for _ in range(n_donors)]
+        initial_w = np.ones(n_donors) / n_donors
+        
+        res = minimize(loss, initial_w, method='SLSQP', bounds=bounds, constraints=constraints)
+        weights = res.x
+
+        # 4. Projetar (2010-2023)
+        Y_donors = df[available_donors].values
+        synth_values = np.dot(Y_donors, weights)
+        
+        # 5. Formatar Output
+        chart_data = []
+        metrics = {"gap_2022": 0, "gap_2023": 0}
+        
+        for i, year in enumerate(df.index):
+            real = df.iloc[i]["RUS"]
+            synth = synth_values[i]
+            gap = real - synth
+            
+            chart_data.append({
+                "year": year,
+                "Real": real,
+                "Synthetic": synth,
+                "Gap": gap
+            })
+            
+            if year == 2022: metrics["gap_2022"] = gap
+            if year == 2023: metrics["gap_2023"] = gap
+
+        # Quem compõe a Rússia Sintética?
+        contributors = sorted(
+            [{"country": c, "weight": round(w*100, 1)} for c, w in zip(available_donors, weights) if w > 0.01],
+            key=lambda x: x["weight"], 
+            reverse=True
+        )
+
+        return {
+            "data": chart_data,
+            "metrics": metrics,
+            "contributors": contributors,
+            "indicator": indicator
+        }
+
+    except Exception as e:
+        print(f"SCM Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- ROTAS DCF/VC/SEARCH (MANTIDAS PARA NÃO PARTIR O RESTO) ---
+# (Cola aqui o resto das funções antigas get_metric, search, dcf, vc se as apagaste. 
+# Se não, certifica-te que este ficheiro tem TODAS as rotas juntas.)
+# Para garantir que funciona, vou colar as funções essenciais resumidas abaixo caso precises.
+
+@app.get("/api/search")
+def search(q: str):
+    try:
+        r = requests.get(f"https://query1.finance.yahoo.com/v1/finance/search?q={q}", headers={'User-Agent': 'Mozilla/5.0'})
+        return [
+            {"symbol": i.get('symbol'), "name": i.get('shortname'), "exchange": i.get('exchange')} 
+            for i in r.json().get('quotes', []) if i.get('quoteType') == 'EQUITY'
+        ]
+    except: return []

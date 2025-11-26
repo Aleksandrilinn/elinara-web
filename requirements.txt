@@ -6,3 +6,6 @@ numpy
 requests
 curl_cffi
 lxml
+scipy
+scikit-learn
+statsmodels
