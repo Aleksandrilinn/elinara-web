@@ -19,7 +19,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Elinara Labs | Economic Venture Studio",
+  title: "Elinara Labs",
   description: "Da Teoria Económica à Solução de Software.",
 };
 
