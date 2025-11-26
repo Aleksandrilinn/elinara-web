@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 // Ícones
 import { Github, Linkedin, Mail, ArrowRight, Database, Zap, Code2, Sparkles, Brain, Globe, Scale, DollarSign, Rocket } from 'lucide-react';
 import { SiPython, SiStreamlit } from "react-icons/si";
+import { DiJava, DiJavascript } from 'react-icons/di';
 
 export default function Home() {
   // Estado para controlar se o Impressum está visível ou não
@@ -195,25 +196,30 @@ export default function Home() {
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[600px]">
-          {/* Elastic */}
+          {/* 1. Elastic (ATUALIZADO) */}
           <div className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-blue-500/50 transition-all overflow-hidden cursor-default">
             <div className="absolute top-4 right-4">
-              <span className="px-3 py-1 text-xs font-mono rounded bg-green-900/30 text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(74,222,128,0.1)]">MVP LIVE</span>
+              <span className="px-3 py-1 text-xs font-mono rounded bg-green-900/30 text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(234,179,8,0.1)]">PROTOTYPE</span>
             </div>
             <div className="h-full flex flex-col justify-between relative z-10">
               <div>
                 <h3 className="text-3xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Elastic</h3>
-                <p className="text-gray-400 text-sm max-w-md">Pricing dinâmico via OCR. A IA lê o menu, analisa a procura e define o preço ótimo.</p>
+                <p className="text-gray-400 text-sm max-w-lg">Pricing dinâmico via OCR. Protótipo funcional em desenvolvimento para integração futura com bases de dados de retalho em tempo real.</p>
               </div>
+              <div className="mt-4 text-xs font-mono text-gray-600 flex items-center gap-1">
+                    <span className="animate-pulse">●</span> Em Desenvolvimento
+                </div>
               <div className="flex gap-3 mt-6">
                  <SiPython className="text-gray-500 hover:text-white transition-colors" size={20}/>
                  <SiStreamlit className="text-gray-500 hover:text-white transition-colors" size={20}/>
+                 <DiJavascript className="text-gray-500 hover:text-white transition-colors" size={20}/>
+
               </div>
             </div>
             <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/20 transition-all"></div>
           </div>
 
-         {/* CARTÃO DO MEIO - AGORA É O LINK PARA O DCF */}
+         {/* 2. DCF Engine (ÍCONE NA MESMA LINHA) */}
           <a href="/dcf" className="group relative md:col-span-1 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-blue-500/50 transition-all cursor-pointer block">
             <div className="absolute top-4 right-4">
               <span className="px-3 py-1 text-xs font-mono rounded bg-blue-900/30 text-blue-400 border border-blue-500/20">
@@ -222,11 +228,13 @@ export default function Home() {
             </div>
             <div className="flex flex-col h-full justify-between">
               <div>
-                  <div className="mb-4 text-blue-500 group-hover:text-white transition-colors">
-                    <DollarSign size={32}/>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="text-blue-500 group-hover:text-white transition-colors">
+                        <DollarSign size={28}/>
+                    </div>
+                    <h3 className="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors">DCF Engine</h3>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">DCF Engine</h3>
-                  <p className="text-gray-400 text-xs leading-relaxed">
+                  <p className="text-gray-400 text-sm leading-relaxed">
                     Calculadora de valor intrínseco. Liga-se à Yahoo Finance para avaliar empresas em tempo real.
                   </p>
               </div>
@@ -236,7 +244,7 @@ export default function Home() {
             </div>
           </a>
 
-          {/* VC Simulator (ROXO */}
+          {/* 3. VC Simulator (ÍCONE NA MESMA LINHA) */}
           <a href="/vc" className="group relative md:col-span-1 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-purple-500/50 transition-all cursor-pointer block">
              <div className="absolute top-4 right-4">
                <span className="px-3 py-1 text-xs font-mono rounded bg-purple-900/30 text-purple-400 border border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
@@ -245,11 +253,13 @@ export default function Home() {
              </div>
              <div className="flex flex-col h-full justify-between">
               <div>
-                  <div className="mb-4 text-purple-500 group-hover:text-white transition-colors">
-                    <Rocket size={32}/>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="text-purple-500 group-hover:text-white transition-colors">
+                        <Rocket size={28}/>
+                    </div>
+                    <h3 className="text-3xl font-bold text-white group-hover:text-purple-400 transition-colors">VC Simulator</h3>
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">VC Simulator</h3>
-                  <p className="text-gray-400 text-xs leading-relaxed">
+                  <p className="text-gray-400 text-sm leading-relaxed">
                     Avaliação "Top-Down" para startups.
                   </p>
               </div>
@@ -260,11 +270,36 @@ export default function Home() {
             <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-600/10 rounded-full blur-[60px] group-hover:bg-purple-600/20 transition-all"></div>
           </a>
 
-          {/* Chronos */}
-          <div className="group relative md:col-span-2 row-span-1 rounded-2xl bg-gradient-to-r from-gray-900 to-black border border-white/10 p-8 flex items-center justify-center cursor-not-allowed">
-            <div className="text-center">
-              <p className="text-2xl font-serif italic text-gray-600 group-hover:text-white transition-colors duration-700">"Projeto Chronos"</p>
+          {/* 4. Chronos (ÍCONE NA MESMA LINHA) */}
+          <div className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-red-500/50 transition-all cursor-not-allowed overflow-hidden">
+            <div className="absolute top-4 right-4">
+              <span className="px-3 py-1 text-xs font-mono rounded bg-gray-800 text-gray-400 border border-gray-700">
+                CONCEPT
+              </span>
             </div>
+            <div className="h-full flex flex-col justify-between relative z-10">
+                <div>
+                    <div className="flex items-center gap-3 mb-3">
+                        <div className="text-red-500 group-hover:text-white transition-colors">
+                            <Globe size={28}/>
+                        </div>
+                        <h3 className="text-3xl font-bold text-white group-hover:text-red-500 transition-colors">Sanctions Scanner</h3>
+                    </div>
+                    <p className="text-gray-400 text-sm max-w-xl">
+                        Tracking do impacto das sanções na economia russa. 
+                                                Aplica o Método de Controlo Sintético (SCM) para medir o diferencial (Δ) entre os indicadores reais da Rússia e uma 'Rússia Sintética' não sancionada.
+                    </p>
+                </div>
+                <div className="mt-4 text-xs font-mono text-gray-600 flex items-center gap-1">
+                    <span className="animate-pulse">●</span> Em Desenvolvimento
+                </div>
+                <div className="flex gap-3 mt-6">
+                 <SiPython className="text-gray-500 hover:text-white transition-colors" size={20}/>
+                 <SiStreamlit className="text-gray-500 hover:text-white transition-colors" size={20}/>
+                 <DiJavascript className="text-gray-500 hover:text-white transition-colors" size={20}/>
+              </div>
+            </div>
+            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-red-900/10 rounded-full blur-[80px] group-hover:bg-red-900/20 transition-all"></div>
           </div>
         </div>
       </section>
@@ -272,13 +307,14 @@ export default function Home() {
 {/* --- FOOTER COM IMPRESSUM LEGAL --- */}
       <footer className="py-20 text-center border-t border-white/5 bg-[#050505] relative z-10 mt-20">
         <div className="max-w-2xl mx-auto px-4 relative z-10">
-            <h3 className="text-2xl font-serif font-medium text-white mb-6">Pronto para desafiar a teoria?</h3>
+            {/* ALTERAÇÃO AQUI: Fonte, Peso e Tracking ajustados para match Navbar */}
+            <h3 className="text-2xl font-bold tracking-tighter text-white mb-6">Pronto para desafiar a teoria?</h3>
             <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">Estamos sempre à procura de problemas desafiantes para resolver.</p>
             
             <div className="flex justify-center gap-8 mb-12">
-                <a href="#" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Github size={16} /> GitHub</a>
-                <a href="#" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Linkedin size={16} /> LinkedIn</a>
-                <a href="mailto:aleksandr0799@hotmail.com" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Mail size={16} /> Contacto</a>
+                <a href="https://github.com/Aleksandrilinn" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Github size={16} /> GitHub</a>
+                <a href="https://www.linkedin.com/in/aleksandr-ilin-70112831a/" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Linkedin size={16} /> LinkedIn</a>
+                <a href="mailto:aleksandr0799@hotmail.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-white transition-colors flex items-center gap-2 text-sm font-mono hover:underline decoration-blue-500 underline-offset-4"><Mail size={16} /> Contacto</a>
             </div>
             
             <div className="border-t border-white/5 pt-8">
