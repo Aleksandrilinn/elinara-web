@@ -4,5 +4,4 @@ yfinance
 pandas
 numpy
 requests
-lxml
-httpx
+fake-useragent
