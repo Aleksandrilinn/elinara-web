@@ -113,19 +113,66 @@ export default function VCPage() {
             </h1>
             
             <div className="space-y-4 text-gray-400 text-sm md:text-base font-light leading-relaxed max-w-3xl mx-auto">
-                <p>O método <strong>Venture Capital</strong> é "Top-Down". Começa no futuro (TAM) e desconta o risco para hoje, ajustando pela diluição massiva das rondas de investimento.</p>
+                <p>O método Venture Capital é a resposta da teoria financeira à incerteza extrema. 
+                    Ao contrário dos modelos tradicionais que exigem histórico, esta abordagem &quot;Top-Down&quot; começa no futuro (TAM) e desconta o risco de execução e a diluição para determinar o valor racional de uma startup hoje.
+                    </p>
             </div>
-        </div>
+            {/* AVISO LEGAL (IGUAL AO DCF) */}
+            <div className="mt-8 w-full flex justify-center">
+                <div className="w-full border-y border-white/5 bg-[#111]/50 py-3 flex items-center justify-center gap-3 text-center px-4">
+                    <AlertTriangle className="text-yellow-600 shrink-0" size={14} />
+                    <p className="text-[10px] md:text-xs text-gray-500 leading-tight whitespace-nowrap overflow-hidden text-ellipsis">
+                        <strong className="text-gray-400">Aviso Legal:</strong> Ferramenta educativa. Não constitui aconselhamento financeiro.
+                    </p>
+                </div>
+            </div>
+        </div> 
 
-        {/* BLUEPRINT TEÓRICO */}
+
+
+                {/* BLUEPRINT TEÓRICO */}
         <div className="mb-12 flex justify-center">
             <div className="w-fit mx-auto relative rounded-2xl bg-[#080808] border border-white/10 overflow-hidden hidden md:block shadow-2xl">
-                <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between relative z-10 bg-black/20 backdrop-blur-sm">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
+                <div className="absolute top-1/2 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent pointer-events-none"></div>
+                
+                {/* CABEÇALHO DO BLUEPRINT COM OS TEUS 2 LINKS */}
+                <div className="px-6 py-3 border-b border-white/5 flex items-center justify-between relative z-10 bg-black/20 backdrop-blur-sm gap-12">
                     <div className="flex items-center gap-2">
                         <BookOpen size={14} className="text-purple-500"/>
                         <span className="text-xs font-mono uppercase tracking-wider text-gray-300">Lógica VC Method</span>
                     </div>
+
+                    {/* --- BOTÕES DE FONTES --- */}
+                    <div className="flex items-center gap-2">
+                        
+                        {/* LINK 1 */}
+                        <a 
+                            href="https://link.springer.com/rwe/10.1007/978-3-031-81653-6_10" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all cursor-pointer group"
+                            title="Ver Guia Prático"
+                        >
+                            <span className="text-[9px] font-mono text-gray-500 group-hover:text-purple-400 uppercase tracking-widest">Source 1</span>
+                            <ArrowRight size={10} className="text-gray-600 group-hover:text-purple-400 -rotate-45 transition-colors"/>
+                        </a>
+
+                        {/* LINK 2 */}
+                        <a 
+                            href="https://growthequityinterviewguide.com/venture-capital/venture-capital-term-sheets/venture-capital-valuation " 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all cursor-pointer group"
+                            title="Ler Artigo Académico"
+                        >
+                            <span className="text-[9px] font-mono text-gray-500 group-hover:text-green-400 uppercase tracking-widest">Source 2</span>
+                            <ArrowRight size={10} className="text-gray-600 group-hover:text-green-400 -rotate-45 transition-colors"/>
+                        </a>
+
+                    </div>
                 </div>
+
                 <div className="p-8 overflow-x-auto scrollbar-hide relative z-10">
                     <div className="flex items-center justify-center min-w-max gap-2">
                         <GlowBlock label="TAM" sub="Mercado Total" color="white" />
@@ -148,7 +195,7 @@ export default function VCPage() {
                 </div>
             </div>
         </div>
-
+        
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-7xl mx-auto pb-20">
             
             {/* --- ESQUERDA: INPUTS --- */}
