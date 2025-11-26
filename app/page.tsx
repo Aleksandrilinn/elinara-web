@@ -142,8 +142,8 @@ export default function Home() {
                     <Sparkles size={12} /> O Nosso Manifesto
                 </div>
                 <h2 className="text-4xl md:text-5xl font-serif font-bold text-white italic leading-tight">
-                    Economia+Programação <br/>
-                    <span className="text-blue-500 italic">Resolvemos Problemas</span>
+                    Economia + <br/>
+                    <span className="text-blue-500 italic">Programação</span>
                 </h2>
                 <div className="space-y-3 text-gray-400 text-lg leading-relaxed font-light">
                     <p>
