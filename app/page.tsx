@@ -297,7 +297,7 @@ export default function Home() {
           </a>
 
           {/* 4. SanctionDelta - AGORA CLICÁVEL */}
-          <a href="/sanctions_scanner" className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-red-500/50 transition-all cursor-pointer overflow-hidden block">
+          <a href="/sanction_scanner" className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-red-500/50 transition-all cursor-pointer overflow-hidden block">
             <div className="absolute top-4 right-4">
               <span className="px-3 py-1 text-xs font-mono rounded bg-gray-800 text-gray-400 border border-gray-700">
                 CONCEPT
@@ -309,7 +309,7 @@ export default function Home() {
                         <div className="text-red-500 group-hover:text-white transition-colors">
                             <Globe size={28}/>
                         </div>
-                        <h3 className="text-3xl font-bold text-white group-hover:text-red-500 transition-colors">SanctionScanner</h3>
+                        <h3 className="text-3xl font-bold text-white group-hover:text-red-500 transition-colors">Sanction Scanner</h3>
                     </div>
                     <p className="text-gray-400 text-sm max-w-xl">
                         Tracking the impact of sanctions on the Russian economy. 

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Activity, AlertCircle, Terminal, TrendingDown, RefreshCcw, ChevronDown, Info, Scale, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Activity, AlertCircle, Terminal, TrendingDown, RefreshCcw, ChevronDown, Info, Scale, BarChart3, ArrowRight, BookOpen } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, ComposedChart, Legend } from 'recharts';
 
 export default function SanctionsPage() {
@@ -86,7 +86,7 @@ export default function SanctionsPage() {
             </div>
             
             <h1 className="text-5xl md:text-7xl font-sans font-black tracking-tighter uppercase leading-none text-white mb-6 flex items-center justify-center gap-4">
-                SANCTION <span className="text-red-600">DELTA</span>
+                SANCTION <span className="text-red-600">SCANNER</span>
             </h1>
             
             <div className="space-y-4 text-gray-400 text-sm md:text-base font-light leading-relaxed max-w-3xl mx-auto">
@@ -184,7 +184,23 @@ export default function SanctionsPage() {
             <div className="lg:col-span-8 min-h-[500px] bg-[#0F0F0F] border border-white/10 p-6 rounded-2xl relative">
                 
                 <div className="flex justify-between items-center mb-8">
-                    <h3 className="text-sm font-bold text-white flex items-center gap-2"><Activity size={16} className="text-red-500"/> Causal Impact Analysis</h3>
+                    <div className="flex items-center gap-4">
+                        <h3 className="text-sm font-bold text-white flex items-center gap-2"><Activity size={16} className="text-red-500"/> Causal Impact Analysis</h3>
+                        
+                        {/* --- THESIS LINK BUTTON --- */}
+                        <a 
+                            href="/thesis.pdf" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-2 py-1 rounded bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all cursor-pointer group"
+                            title="Read Master's Thesis"
+                        >
+                            <BookOpen size={10} className="text-gray-500 group-hover:text-red-400"/>
+                            <span className="text-[9px] font-mono text-gray-500 group-hover:text-red-400 uppercase tracking-widest">Source 1</span>
+                            <ArrowRight size={10} className="text-gray-600 group-hover:text-red-400 -rotate-45 transition-colors"/>
+                        </a>
+                    </div>
+
                     {data && (
                         <div className="flex items-center gap-4 text-[10px] font-mono uppercase">
                             <span className="flex items-center gap-1"><div className="w-2 h-2 bg-red-500 rounded-full"></div> Real Russia</span>
