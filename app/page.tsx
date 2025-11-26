@@ -258,10 +258,10 @@ export default function Home() {
       <footer className="py-20 text-center border-t border-white/5 bg-[#050505] relative">
         <div className="max-w-2xl mx-auto px-4 relative z-10">
             <h3 className="text-2xl font-serif font-medium text-white mb-6">
-                Pronto para desafiar a teoria?
+                Pronto para juntar teoria à partica?
             </h3>
             <p className="text-gray-500 text-sm mb-8 max-w-lg mx-auto">
-                Estamos sempre à procura de problemas complexos que o mercado ignora.
+                Estamos sempre à procura de problemas desafiantes para resolver.
             </p>
             
             <div className="flex justify-center gap-8 mb-12">
