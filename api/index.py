@@ -339,16 +339,14 @@ def vc_calc(tam: float, quota: float, margem: float, multiplo: float, desconto: 
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
-# === ELASTIC ENGINE (ADD-ON) ===
-# ==========================================
-# ==========================================
-# === 1. MATH ENGINE (ALGEBRA LINEAR PURA) ===
+# === 5. ELASTIC ENGINE (ENTERPRISE) ===
 # ==========================================
 
 def run_multivariate_ols(y, X):
     """
-    Executa OLS Multivariado (y = Xb + e) usando Numpy.
+    Executa OLS Multivariado (y = Xb + e) usando Numpy puro.
     Retorna: Betas (Coeficientes), R2, P-Values, Std Errors.
+    Substitui statsmodels para poupar >100MB no Vercel.
     """
     try:
         # Adicionar constante (Intercepto) à primeira coluna
@@ -357,12 +355,12 @@ def run_multivariate_ols(y, X):
         
         # 1. Calcular Betas: b = (X'X)^-1 X'y
         XtX = np.dot(X.T, X)
-        # Adicionar jitter minúsculo para evitar matriz singular (colinearidade perfeita)
+        # Adicionar jitter minúsculo para estabilidade numérica (evitar matriz singular)
         XtX_inv = np.linalg.inv(XtX + np.eye(k) * 1e-8)
         Xty = np.dot(X.T, y)
         beta = np.dot(XtX_inv, Xty)
         
-        # 2. Calcular Estatísticas
+        # 2. Calcular Estatísticas de Ajuste
         y_pred = np.dot(X, beta)
         residuals = y - y_pred
         rss = np.sum(residuals**2)
@@ -375,11 +373,11 @@ def run_multivariate_ols(y, X):
         std_err = np.sqrt(np.diag(cov_matrix))
         
         # 4. T-Stats e P-Values (Aprox. Normal para n grande)
+        # Evitar divisão por zero
         t_stats = np.divide(beta, std_err, out=np.zeros_like(beta), where=std_err!=0)
         p_values = []
         for t in t_stats:
-            # Aproximação simples da cauda de distribuição normal
-            # |t| > 1.96 implica p < 0.05 (significativo)
+            # Aproximação simples da cauda de distribuição normal (Z-score)
             abs_t = abs(t)
             if abs_t > 3.29: p = 0.001
             elif abs_t > 2.58: p = 0.01
@@ -390,18 +388,15 @@ def run_multivariate_ols(y, X):
 
         return beta, r_squared, p_values, std_err
     except Exception as e:
-        print(f"OLS Error: {e}")
+        print(f"OLS Math Error: {e}")
+        # Retornar arrays vazios seguros em caso de erro de álgebra
         return np.zeros(X.shape[1] + 1), 0, [1.0] * (X.shape[1] + 1), []
-
-# ==========================================
-# === 2. ELASTIC ENGINE (REAL ESTIMATION) ===
-# ==========================================
 
 @app.get("/api/elastic")
 def elastic_engine(category_filter: str = "All"):
     try:
         # A. GERADOR DE AMBIENTE MACROECONÓMICO (DADOS SINTÉTICOS ROBUSTOS)
-        # Simular 2 anos de dados (730 dias)
+        # Simular 2 anos de dados (730 dias) para ter significância estatística
         n_days = 730
         dates = pd.date_range(start="2022-01-01", periods=n_days)
         
@@ -421,15 +416,16 @@ def elastic_engine(category_filter: str = "All"):
         categories = ["Lacticínios", "Mercearia", "Bebidas", "Limpeza", "Frescos"]
         products_db = []
         
+        # Gerar catálogo diversificado
         for i in range(1, 51):
-            cat = np.random.choice(categories)
-            base_p = round(np.random.uniform(0.5, 20.0), 2)
+            cat = str(np.random.choice(categories)) # Forçar string
+            base_p = round(float(np.random.uniform(0.5, 20.0)), 2)
             
-            # Definir "Verdadeiros" Coeficientes (que o modelo terá de descobrir)
-            true_elasticity = np.random.uniform(-2.5, -0.2) # Elasticidade Preço
-            true_promo_lift = np.random.uniform(0.2, 0.8)   # Impacto Promoção
-            true_temp_sens = np.random.uniform(-0.02, 0.02) # Sensibilidade Temp
-            if cat == "Bebidas": true_temp_sens += 0.05     # Bebidas vendem mais no calor
+            # Definir "Verdadeiros" Coeficientes (Hidden Parameters)
+            true_elasticity = float(np.random.uniform(-2.5, -0.2)) # Elasticidade Preço
+            true_promo_lift = float(np.random.uniform(0.2, 0.8))   # Impacto Promoção
+            true_temp_sens = float(np.random.uniform(-0.02, 0.02)) # Sensibilidade Temp
+            if cat == "Bebidas": true_temp_sens += 0.05            # Bebidas vendem mais no calor
             
             products_db.append({
                 "id": i,
@@ -443,6 +439,7 @@ def elastic_engine(category_filter: str = "All"):
         results = []
         
         for prod in products_db:
+            # Filtrar se necessário antes de processar
             if category_filter != "All" and prod["category"] != category_filter:
                 continue
                 
@@ -456,7 +453,6 @@ def elastic_engine(category_filter: str = "All"):
             
             # A EQUAÇÃO DA PROCURA (O Segredo)
             # ln(Q) = a + b*ln(P) + c*Promo + d*Temp + e*Gas + f*Weekend + erro
-            # Usamos Poisson para gerar quantidades inteiras realistas
             
             # Termo Determinístico (Log-Log)
             log_q = (4.0  # Intercepto base
@@ -466,8 +462,10 @@ def elastic_engine(category_filter: str = "All"):
                      - 0.1 * gas_price # Assume-se ligeiro impacto negativo da gasolina
                      + 0.3 * is_weekend)
             
-            # Converter para Qtd com ruído
+            # Converter para Qtd com ruído (Poisson)
             expected_q = np.exp(log_q)
+            # Garantir que expected_q não é demasiado grande para Poisson
+            expected_q = np.clip(expected_q, 0, 10000)
             quantities = np.random.poisson(expected_q)
             
             # Criar DataFrame local para estimação
@@ -500,6 +498,7 @@ def elastic_engine(category_filter: str = "All"):
                 
                 # E. EXTRAIR RESULTADOS
                 # Betas: [Intercept, ln_Price, Promo, Temp, Gas, Weekend]
+                # Nota: Betas[1] é a elasticidade preço
                 elasticity = betas[1]
                 p_val_price = p_vals[1]
                 
@@ -507,13 +506,13 @@ def elastic_engine(category_filter: str = "All"):
                 eq_str = f"ln(Q) = {betas[0]:.1f} {betas[1]:.2f}*ln(P) + {betas[2]:.2f}*Promo + {betas[3]:.3f}*Temp"
 
                 # Classificação
-                if elasticity < -1: tag = "Elastic"
-                elif elasticity > -1: tag = "Inelastic"
+                if elasticity < -1: tag = "Elastic (Sensitive)"
+                elif elasticity > -1: tag = "Inelastic (Stable)"
                 else: tag = "Unitary"
                 
-                if elasticity > -1 and p_val_price < 0.1: action = "Increase Price"
-                elif elasticity < -1.5 and p_val_price < 0.1: action = "Lower Price"
-                else: action = "Monitor"
+                if elasticity > -1 and p_val_price < 0.1: action = "Increase Price (+Margin)"
+                elif elasticity < -1.5 and p_val_price < 0.1: action = "Lower Price (+Volume)"
+                else: action = "Maintain"
 
                 # Dados para o gráfico (Pontos reais vs Curva estimada)
                 # Amostra de 50 pontos para o JSON não ficar gigante
@@ -536,7 +535,7 @@ def elastic_engine(category_filter: str = "All"):
                     curve_data.append({"p": round(p, 2), "q": round(np.exp(ln_q_hat), 1)})
 
                 results.append({
-                    "sku": prod["name"],
+                    "product": prod["name"],
                     "category": prod["category"],
                     "elasticity": round(elasticity, 3),
                     "p_value": round(p_val_price, 4),
@@ -551,7 +550,8 @@ def elastic_engine(category_filter: str = "All"):
                         "Weekend Lift": f"{round((np.exp(betas[5])-1)*100, 1)}%"
                     },
                     "plot_points": plot_points,
-                    "curve_data": curve_data
+                    "curve_data": curve_data,
+                    "avg_price": round(df_prod["P"].mean(), 2)
                 })
         
         return sorted(results, key=lambda x: x['elasticity'])
