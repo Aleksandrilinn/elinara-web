@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCcw, Activity, ShoppingCart, TrendingUp, TrendingDown, Tag, Filter, X, BarChart2, Calculator, FileText } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, Activity, ShoppingCart, TrendingUp, TrendingDown, Tag, Filter, X, BarChart2, Calculator, FileText, Thermometer, Fuel } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -28,36 +28,32 @@ export default function ElasticPage() {
   return (
     <main className="min-h-screen bg-[#050505] text-white font-sans selection:bg-green-500/30 flex relative overflow-hidden">
       
-      {/* MAIN CONTENT AREA */}
       <div className={`flex-1 flex flex-col transition-all duration-500 ${selectedProduct ? 'mr-[500px]' : ''}`}>
-          {/* HEADER */}
           <nav className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-40">
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <a href="/" className="text-gray-400 hover:text-white transition-colors"><ArrowLeft size={20}/></a>
                     <div className="h-6 w-px bg-white/10"></div>
                     <span className="font-bold text-lg tracking-tight text-white flex items-center gap-2">
-                        ELASTIC <span className="text-xs font-mono bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">ENTERPRISE v2.0</span>
+                        ELASTIC <span className="text-xs font-mono bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">ENTERPRISE v2.1</span>
                     </span>
                 </div>
                 <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded border border-white/10 text-gray-300">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> SQL: LIVE
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> LIVE ESTIMATION
                     </div>
                 </div>
             </div>
           </nav>
 
           <div className="p-6 max-w-7xl mx-auto w-full">
-            {/* KPI CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <KpiCard label="Products Analyzed" value={data.length.toString()} sub="SKUs in Model" icon={<ShoppingCart size={18} className="text-blue-400"/>} />
-                <KpiCard label="High Sensitivity" value={data.filter(i => i.elasticity < -1.5).length.toString()} sub="Elasticity < -1.5" icon={<Activity size={18} className="text-red-400"/>} />
-                <KpiCard label="Actionable SKUs" value={data.filter(i => i.action !== "Maintain").length.toString()} sub="Price Opportunities" icon={<TrendingUp size={18} className="text-green-400"/>} />
-                <KpiCard label="Model Fit (Avg)" value={data.length > 0 ? (data.reduce((a,b)=>a+b.r2,0)/data.length).toFixed(2) : "-"} sub="R-Squared" icon={<Tag size={18} className="text-purple-400"/>} />
+                <KpiCard label="SKUs Modeled" value={data.length.toString()} sub="Multivariate Regressions" icon={<ShoppingCart size={18} className="text-blue-400"/>} />
+                <KpiCard label="High Sensitivity" value={data.filter(i => i.elasticity < -1.5).length.toString()} sub="ε < -1.5" icon={<Activity size={18} className="text-red-400"/>} />
+                <KpiCard label="Opportunities" value={data.filter(i => i.action !== "Maintain").length.toString()} sub="Pricing Actions" icon={<TrendingUp size={18} className="text-green-400"/>} />
+                <KpiCard label="Model R² (Avg)" value={data.length > 0 ? (data.reduce((a,b)=>a+b.r2,0)/data.length).toFixed(2) : "-"} sub="Explained Variance" icon={<Tag size={18} className="text-purple-400"/>} />
             </div>
 
-            {/* MAIN DASHBOARD */}
             <div className="bg-[#0F0F0F] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
                 <div className="p-4 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex gap-2">
@@ -76,13 +72,13 @@ export default function ElasticPage() {
                                 <th className="p-4 font-normal text-right">Avg Price</th>
                                 <th className="p-4 font-normal text-right">Elasticity (ε)</th>
                                 <th className="p-4 font-normal">Sensitivity</th>
-                                <th className="p-4 font-normal">AI Recommendation</th>
+                                <th className="p-4 font-normal">Recommendation</th>
                                 <th className="p-4 font-normal text-right">R²</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm">
                             {loading ? (
-                                <tr><td colSpan={6} className="p-12 text-center text-gray-500 animate-pulse font-mono">Running OLS Regressions...</td></tr>
+                                <tr><td colSpan={6} className="p-12 text-center text-gray-500 animate-pulse font-mono">Running OLS Matrix Algebra...</td></tr>
                             ) : data.map((item, i) => (
                                 <tr 
                                     key={i} 
@@ -121,7 +117,6 @@ export default function ElasticPage() {
           </div>
       </div>
 
-      {/* SIDE PANEL (Drill-Down) */}
       <AnimatePresence>
         {selectedProduct && (
             <motion.div 
@@ -135,61 +130,52 @@ export default function ElasticPage() {
                     <div className="flex justify-between items-start mb-8">
                         <div>
                             <h2 className="text-2xl font-bold text-white leading-tight">{selectedProduct.product}</h2>
-                            <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">{selectedProduct.category} • SKU #83921</span>
+                            <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">{selectedProduct.category} • OLS Regression</span>
                         </div>
                         <button onClick={() => setSelectedProduct(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
                     </div>
 
-                    {/* CHART */}
                     <div className="bg-[#0F0F0F] border border-white/10 p-4 rounded-xl mb-6">
-                        <h3 className="text-xs font-bold text-gray-300 mb-4 flex items-center gap-2"><BarChart2 size={14}/> Demand Curve Model</h3>
+                        <h3 className="text-xs font-bold text-gray-300 mb-4 flex items-center gap-2"><BarChart2 size={14}/> Demand Function Visualization</h3>
                         <div className="h-60 w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart margin={{top: 5, right: 5, bottom: 5, left: -20}}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false}/>
-                                    <XAxis dataKey="price" type="number" name="Price" unit="€" stroke="#666" fontSize={10} domain={['dataMin', 'dataMax']}/>
-                                    <YAxis dataKey="predicted_qty" type="number" name="Qty" stroke="#666" fontSize={10}/>
-                                    <Tooltip 
-                                        cursor={{ strokeDasharray: '3 3' }} 
-                                        contentStyle={{ backgroundColor: '#000', borderColor: '#333', fontSize: '12px' }}
-                                    />
-                                    <Scatter name="Observations" data={selectedProduct.real_points} fill="#333" line={false} shape="circle" />
-                                    <Line data={selectedProduct.curve_data} dataKey="predicted_qty" type="monotone" stroke="#22c55e" strokeWidth={2} dot={false} activeDot={false} />
+                                    <XAxis dataKey="p" type="number" name="Price" unit="€" stroke="#666" fontSize={10} domain={['dataMin', 'dataMax']}/>
+                                    <YAxis dataKey="q" type="number" name="Qty" stroke="#666" fontSize={10}/>
+                                    <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: '#000', borderColor: '#333', fontSize: '12px' }} />
+                                    <Scatter name="Observations" data={selectedProduct.plot_points} fill="#333" line={false} shape="circle" />
+                                    <Line data={selectedProduct.curve_data} dataKey="q" type="monotone" stroke="#22c55e" strokeWidth={2} dot={false} activeDot={false} />
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="flex justify-between text-[10px] text-gray-500 px-2">
-                            <span>Log-Linear Fit</span>
-                            <span>R² = {selectedProduct.r2}</span>
-                        </div>
                     </div>
 
-                    {/* MODEL CARD */}
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         <div className="p-4 rounded-xl bg-blue-900/10 border border-blue-500/20">
-                            <p className="text-xs font-mono text-blue-400 uppercase mb-2">Model Specification</p>
-                            <p className="font-mono text-sm text-white">ln(Q) = {selectedProduct.intercept} {selectedProduct.elasticity}*ln(P) + {selectedProduct.promo_lift > 0 ? '+' : ''}{(selectedProduct.promo_lift/100).toFixed(2)}*Promo</p>
+                            <p className="text-xs font-mono text-blue-400 uppercase mb-2">Econometric Equation</p>
+                            <p className="font-mono text-sm text-white tracking-tight break-all">{selectedProduct.equation}</p>
+                            <p className="text-[10px] text-gray-500 mt-2 italic">*Controlling for Seasonality & Macro Factors</p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <StatBox label="Price Elasticity" value={selectedProduct.elasticity.toFixed(2)} color={selectedProduct.elasticity < -1 ? "text-red-400" : "text-blue-400"} />
-                            <StatBox label="Promo Lift" value={`+${selectedProduct.promo_lift}%`} color="text-green-400" />
-                            <StatBox label="P-Value" value={selectedProduct.p_value < 0.001 ? "< 0.001" : selectedProduct.p_value} color="text-gray-300" />
-                            <StatBox label="Sample Size" value={selectedProduct.obs_count} color="text-gray-300" />
+                        <div>
+                            <h4 className="text-xs font-bold text-white mb-3">Multivariate Coefficients</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <StatBox label="Promo Lift" value={selectedProduct.coefficients["Promo Lift"]} color="text-green-400" icon={<Tag size={12}/>} />
+                                <StatBox label="Weekend Effect" value={selectedProduct.coefficients["Weekend Lift"]} color="text-yellow-400" icon={<Activity size={12}/>} />
+                                <StatBox label="Temp Sens." value={selectedProduct.coefficients["Temp Sens"]} color="text-gray-300" icon={<Thermometer size={12}/>} />
+                                <StatBox label="Fuel Sens." value={selectedProduct.coefficients["Gas Sens"]} color="text-gray-300" icon={<Fuel size={12}/>} />
+                            </div>
                         </div>
 
                          <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                             <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Calculator size={14}/> Strategic Implication</h4>
                             <p className="text-xs text-gray-400 leading-relaxed">
                                 {selectedProduct.elasticity < -1 
-                                ? "Demand is highly sensitive. A 10% price cut is expected to increase volume by " + Math.abs(selectedProduct.elasticity * 10).toFixed(1) + "%, likely increasing total revenue."
-                                : "Demand is inelastic. Customers are not sensitive to price changes. Increasing price will likely improve margins without significant volume loss."}
+                                ? `Demand is highly sensitive (ε = ${selectedProduct.elasticity}). A 10% price cut could increase volume by ${Math.abs(selectedProduct.elasticity * 10).toFixed(1)}%, potentially increasing revenue.`
+                                : `Demand is inelastic (ε = ${selectedProduct.elasticity}). Consumers are not sensitive to price. Increasing price is recommended to improve margins.`}
                             </p>
                         </div>
-
-                        <button className="w-full py-3 bg-white text-black font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                            <FileText size={14}/> Export Full Analysis PDF
-                        </button>
                     </div>
 
                 </div>
@@ -213,11 +199,13 @@ function KpiCard({ label, value, sub, icon }: any) {
     )
 }
 
-function StatBox({ label, value, color }: any) {
+function StatBox({ label, value, color, icon }: any) {
     return (
-        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg">
-            <p className="text-[10px] text-gray-500 uppercase mb-1">{label}</p>
-            <p className={`text-lg font-bold font-mono ${color}`}>{value}</p>
+        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg flex justify-between items-center">
+            <div>
+                <p className="text-[9px] text-gray-500 uppercase mb-1 flex items-center gap-1">{icon} {label}</p>
+                <p className={`text-sm font-bold font-mono ${color}`}>{value}</p>
+            </div>
         </div>
     )
 }

@@ -341,151 +341,217 @@ def vc_calc(tam: float, quota: float, margem: float, multiplo: float, desconto: 
 # ==========================================
 # === ELASTIC ENGINE (ADD-ON) ===
 # ==========================================
+# ==========================================
+# === 1. MATH ENGINE (ALGEBRA LINEAR PURA) ===
+# ==========================================
 
-def run_manual_ols(y, X):
+def run_multivariate_ols(y, X):
     """
-    Executa Regressão Linear (OLS) usando apenas Numpy.
-    Substitui statsmodels para poupar memória no Vercel.
+    Executa OLS Multivariado (y = Xb + e) usando Numpy.
+    Retorna: Betas (Coeficientes), R2, P-Values, Std Errors.
     """
     try:
-        # Adicionar constante (intercepto)
+        # Adicionar constante (Intercepto) à primeira coluna
         X = np.column_stack([np.ones(len(X)), X])
+        n, k = X.shape
         
-        # Calcular Betas: (X'X)^-1 X'Y
-        beta, residuals, rank, s = np.linalg.lstsq(X, y, rcond=None)
+        # 1. Calcular Betas: b = (X'X)^-1 X'y
+        XtX = np.dot(X.T, X)
+        # Adicionar jitter minúsculo para evitar matriz singular (colinearidade perfeita)
+        XtX_inv = np.linalg.inv(XtX + np.eye(k) * 1e-8)
+        Xty = np.dot(X.T, y)
+        beta = np.dot(XtX_inv, Xty)
         
-        # Calcular R-Squared
-        y_mean = np.mean(y)
-        tss = np.sum((y - y_mean)**2)
-        rss = np.sum((y - np.dot(X, beta))**2) if not residuals.size else residuals[0]
+        # 2. Calcular Estatísticas
+        y_pred = np.dot(X, beta)
+        residuals = y - y_pred
+        rss = np.sum(residuals**2)
+        tss = np.sum((y - np.mean(y))**2)
         r_squared = 1 - (rss / tss) if tss > 0 else 0
         
-        # Calcular P-Values (Aproximação via t-stat)
-        n, k = X.shape
-        if n > k:
-            sigma2 = rss / (n - k)
-            XtX = np.dot(X.T, X)
-            # Adicionar epsilon para estabilidade inversa
-            XtX_inv = np.linalg.inv(XtX + np.eye(k) * 1e-6) 
-            cov_matrix = sigma2 * XtX_inv
-            std_err = np.sqrt(np.diag(cov_matrix))
-            std_err[std_err == 0] = 1e-10 # Evitar divisão por zero
-            t_stats = beta / std_err
-            
-            # Tabela de probabilidade t simplificada
-            p_values = []
-            for t in t_stats:
-                abs_t = abs(t)
-                if abs_t > 3.29: p = 0.001
-                elif abs_t > 2.58: p = 0.01
-                elif abs_t > 1.96: p = 0.05
-                elif abs_t > 1.64: p = 0.10
-                else: p = 0.20
-                p_values.append(p)
-        else:
-            p_values = [1.0] * k
+        # 3. Matriz de Covariância e Erros Padrão
+        sigma2 = rss / (n - k) if n > k else 0
+        cov_matrix = sigma2 * XtX_inv
+        std_err = np.sqrt(np.diag(cov_matrix))
+        
+        # 4. T-Stats e P-Values (Aprox. Normal para n grande)
+        t_stats = np.divide(beta, std_err, out=np.zeros_like(beta), where=std_err!=0)
+        p_values = []
+        for t in t_stats:
+            # Aproximação simples da cauda de distribuição normal
+            # |t| > 1.96 implica p < 0.05 (significativo)
+            abs_t = abs(t)
+            if abs_t > 3.29: p = 0.001
+            elif abs_t > 2.58: p = 0.01
+            elif abs_t > 1.96: p = 0.05
+            elif abs_t > 1.64: p = 0.10
+            else: p = 0.20
+            p_values.append(p)
 
-        return beta, r_squared, p_values
+        return beta, r_squared, p_values, std_err
     except Exception as e:
-        print(f"OLS Math Error: {e}")
-        return np.zeros(X.shape[1] + 1), 0, [1.0] * (X.shape[1] + 1)
+        print(f"OLS Error: {e}")
+        return np.zeros(X.shape[1] + 1), 0, [1.0] * (X.shape[1] + 1), []
 
-# --- ROTA 1: ELASTIC ENGINE (ATUALIZADO COM DADOS DO GRÁFICO) ---
+# ==========================================
+# === 2. ELASTIC ENGINE (REAL ESTIMATION) ===
+# ==========================================
+
 @app.get("/api/elastic")
 def elastic_engine(category_filter: str = "All"):
     try:
-        # 1. Gerar Dados Simulados (On-the-fly)
-        data = []
-        products_base = [
-            {"n": "Leite Meio Gordo", "p": 0.90, "e": -0.4, "c": "Dairy"},
-            {"n": "Manteiga", "p": 2.50, "e": -0.8, "c": "Dairy"},
-            {"n": "Café Grão", "p": 12.00, "e": -1.5, "c": "Grocery"},
-            {"n": "Azeite Virgem", "p": 8.00, "e": -0.6, "c": "Grocery"},
-            {"n": "Detergente Roupa", "p": 15.00, "e": -2.2, "c": "Cleaning"},
-            {"n": "Bolachas Maria", "p": 1.20, "e": -1.1, "c": "Grocery"},
-            {"n": "Cerveja Pack 6", "p": 6.00, "e": -1.8, "c": "Drinks"},
-            {"n": "Arroz Agulha", "p": 1.10, "e": -0.3, "c": "Grocery"}
-        ]
+        # A. GERADOR DE AMBIENTE MACROECONÓMICO (DADOS SINTÉTICOS ROBUSTOS)
+        # Simular 2 anos de dados (730 dias)
+        n_days = 730
+        dates = pd.date_range(start="2022-01-01", periods=n_days)
         
-        # Gerar 2000 transações para ter densidade estatística
-        for _ in range(2000):
-            p_info = products_base[np.random.randint(0, len(products_base))]
-            # Simular choque de preço realista (log-normal para evitar preços negativos)
-            shock = np.random.normal(0, 0.15)
-            price = round(p_info["p"] * (1 + shock), 2)
-            if price < 0.1: price = 0.1
-            
-            # Curva da procura com erro aleatório (ruído de mercado)
-            noise = np.random.normal(0, 0.1) 
-            qty = int(np.random.poisson(50) * (price / p_info["p"]) ** p_info["e"] * (1 + noise))
-            if qty < 0: qty = 0
+        # Variáveis Explicativas Globais
+        # 1. Temperatura (Sazonalidade Sinusoidal)
+        days = np.arange(n_days)
+        temp = 15 + 10 * np.sin(2 * np.pi * days / 365) + np.random.normal(0, 2, n_days)
+        
+        # 2. Preço Gasolina (Tendência com Choques)
+        gas_price = np.linspace(1.5, 1.9, n_days) + np.random.normal(0, 0.05, n_days)
+        
+        # 3. Dia da Semana (0=Seg, 6=Dom)
+        weekday = dates.dayofweek.values
+        is_weekend = (weekday >= 5).astype(int)
 
-            data.append({
-                "category": p_info["c"],
-                "product": p_info["n"],
-                "quantity": qty,
-                "price": price,
-                "is_promo": 1 if shock < -0.1 else 0
+        # B. GERAR BASE DE DADOS DE PRODUTOS (50 SKUs)
+        categories = ["Lacticínios", "Mercearia", "Bebidas", "Limpeza", "Frescos"]
+        products_db = []
+        
+        for i in range(1, 51):
+            cat = np.random.choice(categories)
+            base_p = round(np.random.uniform(0.5, 20.0), 2)
+            
+            # Definir "Verdadeiros" Coeficientes (que o modelo terá de descobrir)
+            true_elasticity = np.random.uniform(-2.5, -0.2) # Elasticidade Preço
+            true_promo_lift = np.random.uniform(0.2, 0.8)   # Impacto Promoção
+            true_temp_sens = np.random.uniform(-0.02, 0.02) # Sensibilidade Temp
+            if cat == "Bebidas": true_temp_sens += 0.05     # Bebidas vendem mais no calor
+            
+            products_db.append({
+                "id": i,
+                "name": f"SKU-{1000+i} {cat[:3].upper()}",
+                "category": cat,
+                "base_price": base_p,
+                "params": [true_elasticity, true_promo_lift, true_temp_sens]
+            })
+
+        # C. GERAR TRANSAÇÕES E ESTIMAR (LOOP)
+        results = []
+        
+        for prod in products_db:
+            if category_filter != "All" and prod["category"] != category_filter:
+                continue
+                
+            # 1. Gerar Série Temporal para este produto
+            # Simular preços variados para haver variância para o modelo capturar
+            price_shocks = np.random.normal(0, 0.15, n_days)
+            prices = prod["base_price"] * (1 + price_shocks)
+            prices = np.maximum(prices, 0.1) # Preço mínimo
+            
+            promos = (price_shocks < -0.10).astype(int)
+            
+            # A EQUAÇÃO DA PROCURA (O Segredo)
+            # ln(Q) = a + b*ln(P) + c*Promo + d*Temp + e*Gas + f*Weekend + erro
+            # Usamos Poisson para gerar quantidades inteiras realistas
+            
+            # Termo Determinístico (Log-Log)
+            log_q = (4.0  # Intercepto base
+                     + prod["params"][0] * np.log(prices) 
+                     + prod["params"][1] * promos 
+                     + prod["params"][2] * temp 
+                     - 0.1 * gas_price # Assume-se ligeiro impacto negativo da gasolina
+                     + 0.3 * is_weekend)
+            
+            # Converter para Qtd com ruído
+            expected_q = np.exp(log_q)
+            quantities = np.random.poisson(expected_q)
+            
+            # Criar DataFrame local para estimação
+            df_prod = pd.DataFrame({
+                "Q": quantities,
+                "P": prices,
+                "Promo": promos,
+                "Temp": temp,
+                "Gas": gas_price,
+                "Weekend": is_weekend
             })
             
-        df = pd.DataFrame(data)
-        if category_filter != "All":
-            df = df[df["category"] == category_filter]
-
-        # 2. Motor Econométrico
-        results = []
-        df['ln_Qtd'] = np.log(df['quantity'] + 1)
-        df['ln_Price'] = np.log(df['price'])
-        
-        for product in df['product'].unique():
-            sub = df[df['product'] == product]
-            if len(sub) > 10:
-                y = sub['ln_Qtd'].values
-                X = np.column_stack([sub['ln_Price'].values, sub['is_promo'].values])
+            # Filtrar dias sem vendas (log(0) issue)
+            df_prod = df_prod[df_prod["Q"] > 0]
+            
+            if len(df_prod) > 50: # Só estimar se houver dados suficientes
+                # D. ESTIMAÇÃO ECONOMÉTRICA (O "Black Box" a funcionar)
+                # Variáveis: ln(Price), Promo, Temp, Gas, Weekend
+                y = np.log(df_prod["Q"]).values
+                X = np.column_stack([
+                    np.log(df_prod["P"]).values,
+                    df_prod["Promo"].values,
+                    df_prod["Temp"].values,
+                    df_prod["Gas"].values,
+                    df_prod["Weekend"].values
+                ])
                 
-                # Regressão OLS Manual
-                betas, r2, p_vals = run_manual_ols(y, X)
+                # CORRER REGRESSÃO
+                betas, r2, p_vals, std_errs = run_multivariate_ols(y, X)
                 
-                intercept = betas[0]
+                # E. EXTRAIR RESULTADOS
+                # Betas: [Intercept, ln_Price, Promo, Temp, Gas, Weekend]
                 elasticity = betas[1]
-                promo_effect = betas[2]
+                p_val_price = p_vals[1]
                 
-                # Interpretação de Negócio
-                if elasticity < -1: tag = "Elastic (Sensitive)"
-                elif elasticity > -1: tag = "Inelastic (Stable)"
+                # Construir "Function String" para mostrar ao utilizador
+                eq_str = f"ln(Q) = {betas[0]:.1f} {betas[1]:.2f}*ln(P) + {betas[2]:.2f}*Promo + {betas[3]:.3f}*Temp"
+
+                # Classificação
+                if elasticity < -1: tag = "Elastic"
+                elif elasticity > -1: tag = "Inelastic"
                 else: tag = "Unitary"
                 
-                if elasticity > -1 and p_vals[1] < 0.1: action = "Increase Price (+Margin)"
-                elif elasticity < -1.5 and p_vals[1] < 0.1: action = "Lower Price (+Volume)"
-                else: action = "Maintain"
+                if elasticity > -1 and p_val_price < 0.1: action = "Increase Price"
+                elif elasticity < -1.5 and p_val_price < 0.1: action = "Lower Price"
+                else: action = "Monitor"
 
-                # Gerar Pontos para o Gráfico (Curva de Procura Ajustada)
-                # Criamos uma curva teórica baseada nos betas estimados
-                price_range = np.linspace(sub['price'].min(), sub['price'].max(), 20)
+                # Dados para o gráfico (Pontos reais vs Curva estimada)
+                # Amostra de 50 pontos para o JSON não ficar gigante
+                sample = df_prod.sample(min(50, len(df_prod)))
+                plot_points = sample.apply(lambda x: {"p": x["P"], "q": x["Q"]}, axis=1).tolist()
+                
+                # Gerar curva ceteris paribus (mantendo outras vars na média)
+                p_range = np.linspace(df_prod["P"].min(), df_prod["P"].max(), 20)
+                avg_promo = df_prod["Promo"].mean()
+                avg_temp = df_prod["Temp"].mean()
+                avg_gas = df_prod["Gas"].mean()
+                avg_week = df_prod["Weekend"].mean()
+                
                 curve_data = []
-                for p in price_range:
-                    # ln(Q) = alpha + beta*ln(P) + beta_promo*0 (assumindo sem promo para a curva base)
-                    ln_q_pred = intercept + elasticity * np.log(p)
-                    q_pred = np.exp(ln_q_pred)
-                    curve_data.append({"price": round(p, 2), "predicted_qty": round(q_pred, 1)})
-
-                # Pontos reais (amostra para não pesar no JSON)
-                real_points = sub[['price', 'quantity']].sample(min(50, len(sub))).to_dict(orient='records')
+                for p in p_range:
+                    # Previsão usando os betas estimados
+                    ln_q_hat = (betas[0] + betas[1]*np.log(p) + 
+                                betas[2]*avg_promo + betas[3]*avg_temp + 
+                                betas[4]*avg_gas + betas[5]*avg_week)
+                    curve_data.append({"p": round(p, 2), "q": round(np.exp(ln_q_hat), 1)})
 
                 results.append({
-                    "product": product,
-                    "category": sub['category'].iloc[0],
+                    "sku": prod["name"],
+                    "category": prod["category"],
                     "elasticity": round(elasticity, 3),
-                    "p_value": round(p_vals[1], 4),
-                    "r2": round(r2, 3),
-                    "promo_lift": round((np.exp(promo_effect) - 1) * 100, 1), # Impacto % da promoção
+                    "p_value": round(p_val_price, 4),
+                    "r2": round(r2, 2),
                     "tag": tag,
                     "action": action,
-                    "avg_price": round(sub['price'].mean(), 2),
-                    "obs_count": len(sub),
-                    "intercept": round(intercept, 2),
-                    "curve_data": curve_data, # Dados da linha
-                    "real_points": real_points # Dados dos pontos (scatter)
+                    "equation": eq_str,
+                    "coefficients": {
+                        "Promo Lift": f"{round((np.exp(betas[2])-1)*100, 1)}%",
+                        "Temp Sens": round(betas[3], 3),
+                        "Gas Sens": round(betas[4], 3),
+                        "Weekend Lift": f"{round((np.exp(betas[5])-1)*100, 1)}%"
+                    },
+                    "plot_points": plot_points,
+                    "curve_data": curve_data
                 })
         
         return sorted(results, key=lambda x: x['elasticity'])
