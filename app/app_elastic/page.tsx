@@ -1,14 +1,17 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCcw, Activity, ShoppingCart, TrendingUp, TrendingDown, Tag, Filter, X, BarChart2, Calculator, FileText, Thermometer, Fuel, Coins, Microscope } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, Activity, ShoppingCart, TrendingUp, TrendingDown, Tag, Filter, X, BarChart2, Calculator, FileText, Search, Table, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function ElasticPage() {
   const [data, setData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'strategy' | 'econometrics'>('strategy');
 
   const fetchData = async () => {
     setLoading(true);
@@ -16,6 +19,7 @@ export default function ElasticPage() {
       const res = await fetch(`/api/elastic?category_filter=${filter}`);
       const json = await res.json();
       setData(json);
+      setFilteredData(json);
     } catch (e) {
       console.error(e);
     } finally {
@@ -25,45 +29,77 @@ export default function ElasticPage() {
 
   useEffect(() => { fetchData(); }, [filter]);
 
+  // Filtragem local por texto
+  useEffect(() => {
+      if (!searchQuery) {
+          setFilteredData(data);
+      } else {
+          const lower = searchQuery.toLowerCase();
+          setFilteredData(data.filter(item => 
+              item.product.toLowerCase().includes(lower) || 
+              item.category.toLowerCase().includes(lower)
+          ));
+      }
+  }, [searchQuery, data]);
+
   return (
     <main className="min-h-screen bg-[#050505] text-white font-sans selection:bg-green-500/30 flex relative overflow-hidden">
       
-      <div className={`flex-1 flex flex-col transition-all duration-500 ${selectedProduct ? 'mr-[500px]' : ''}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-500 ${selectedProduct ? 'mr-[600px]' : ''}`}>
+          {/* NAVBAR */}
           <nav className="border-b border-white/5 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-40">
             <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <a href="/" className="text-gray-400 hover:text-white transition-colors"><ArrowLeft size={20}/></a>
                     <div className="h-6 w-px bg-white/10"></div>
                     <span className="font-bold text-lg tracking-tight text-white flex items-center gap-2">
-                        ELASTIC <span className="text-xs font-mono bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">ENTERPRISE v2.2</span>
+                        ELASTIC <span className="text-xs font-mono bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">ENTERPRISE v2.3</span>
                     </span>
                 </div>
                 <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
                     <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded border border-white/10 text-gray-300">
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> LIVE ESTIMATION
+                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div> LIVE OLS ENGINE
                     </div>
                 </div>
             </div>
           </nav>
 
           <div className="p-6 max-w-7xl mx-auto w-full">
+            {/* KPI CARDS */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                 <KpiCard label="SKUs Modeled" value={data.length.toString()} sub="Multivariate Regressions" icon={<ShoppingCart size={18} className="text-blue-400"/>} />
                 <KpiCard label="High Sensitivity" value={data.filter(i => i.elasticity < -1.5).length.toString()} sub="ε < -1.5 (Elastic)" icon={<Activity size={18} className="text-red-400"/>} />
-                <KpiCard label="Price Opportunities" value={data.filter(i => i.action !== "Maintain").length.toString()} sub="Revenue Actions" icon={<TrendingUp size={18} className="text-green-400"/>} />
-                <KpiCard label="Model Fit (R² Avg)" value={data.length > 0 ? (data.reduce((a,b)=>a+b.r2,0)/data.length).toFixed(2) : "-"} sub="Variance Explained" icon={<Tag size={18} className="text-purple-400"/>} />
+                <KpiCard label="Opportunities" value={data.filter(i => i.action !== "Maintain").length.toString()} sub="Revenue Actions" icon={<TrendingUp size={18} className="text-green-400"/>} />
+                <KpiCard label="Model Fit (R² Avg)" value={data.length > 0 ? (data.reduce((a,b)=>a+b.r2,0)/data.length).toFixed(2) : "-"} sub="Explained Variance" icon={<Tag size={18} className="text-purple-400"/>} />
             </div>
 
+            {/* DASHBOARD PANEL */}
             <div className="bg-[#0F0F0F] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                
+                {/* TOOLBAR WITH SEARCH */}
                 <div className="p-4 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex gap-2">
                         {["All", "Dairy", "Grocery", "Drinks", "Cleaning"].map(cat => (
                             <button key={cat} onClick={() => setFilter(cat)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${filter === cat ? 'bg-white text-black' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>{cat}</button>
                         ))}
                     </div>
-                    <button onClick={fetchData} className="p-2 rounded-lg bg-green-600 hover:bg-green-500 text-white transition-all"><RefreshCcw size={16}/></button>
+
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <div className="relative group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-green-500 transition-colors" size={16} />
+                            <input 
+                                type="text" 
+                                placeholder="Search SKU..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-[#050505] border border-white/20 rounded-lg py-1.5 pl-9 pr-4 text-xs text-white focus:outline-none focus:border-green-500 w-full md:w-64 transition-all"
+                            />
+                        </div>
+                        <button onClick={fetchData} className="p-1.5 rounded-lg bg-green-600 hover:bg-green-500 text-white transition-all"><RefreshCcw size={16}/></button>
+                    </div>
                 </div>
 
+                {/* TABLE */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -79,7 +115,7 @@ export default function ElasticPage() {
                         <tbody className="text-sm">
                             {loading ? (
                                 <tr><td colSpan={6} className="p-12 text-center text-gray-500 animate-pulse font-mono">Running OLS Matrix Algebra...</td></tr>
-                            ) : data.map((item, i) => (
+                            ) : filteredData.map((item, i) => (
                                 <tr 
                                     key={i} 
                                     onClick={() => setSelectedProduct(item)}
@@ -96,7 +132,7 @@ export default function ElasticPage() {
                                     <td className="p-4 text-right font-mono font-bold text-white">{item.elasticity.toFixed(2)}</td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${item.tag.includes("Elastic") ? "bg-red-900/20 text-red-400 border-red-500/20" : "bg-blue-900/20 text-blue-400 border-blue-500/20"}`}>
-                                            {item.tag}
+                                            {item.tag.split(' ')[0]}
                                         </span>
                                     </td>
                                     <td className="p-4">
@@ -117,6 +153,7 @@ export default function ElasticPage() {
           </div>
       </div>
 
+      {/* SIDE PANEL (Drill-Down) */}
       <AnimatePresence>
         {selectedProduct && (
             <motion.div 
@@ -124,74 +161,99 @@ export default function ElasticPage() {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="fixed top-0 right-0 h-full w-[500px] bg-[#080808] border-l border-white/10 z-50 shadow-[-50px_0_100px_rgba(0,0,0,0.5)] overflow-y-auto"
+                className="fixed top-0 right-0 h-full w-[600px] bg-[#080808] border-l border-white/10 z-50 shadow-[-50px_0_100px_rgba(0,0,0,0.5)] overflow-y-auto flex flex-col"
             >
-                <div className="p-6">
-                    <div className="flex justify-between items-start mb-8">
+                <div className="p-6 border-b border-white/10">
+                    <div className="flex justify-between items-start mb-4">
                         <div>
                             <h2 className="text-2xl font-bold text-white leading-tight">{selectedProduct.product}</h2>
-                            <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">{selectedProduct.category} • OLS Regression</span>
+                            <span className="text-xs font-mono text-gray-500 uppercase tracking-widest">{selectedProduct.category} • SKU #83921</span>
                         </div>
                         <button onClick={() => setSelectedProduct(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
                     </div>
-
-                    {/* CHART */}
-                    <div className="bg-[#0F0F0F] border border-white/10 p-4 rounded-xl mb-6">
-                        <h3 className="text-xs font-bold text-gray-300 mb-4 flex items-center gap-2"><BarChart2 size={14}/> Demand Curve (Ceteris Paribus)</h3>
-                        <div className="h-60 w-full">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart margin={{top: 5, right: 5, bottom: 5, left: -20}}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false}/>
-                                    <XAxis dataKey="p" type="number" name="Price" unit="€" stroke="#666" fontSize={10} domain={['dataMin', 'dataMax']}/>
-                                    <YAxis dataKey="q" type="number" name="Qty" stroke="#666" fontSize={10}/>
-                                    <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: '#000', borderColor: '#333', fontSize: '12px' }} />
-                                    <Scatter name="Observations" data={selectedProduct.plot_points} fill="#333" line={false} shape="circle" />
-                                    <Line data={selectedProduct.curve_data} dataKey="q" type="monotone" stroke="#22c55e" strokeWidth={2} dot={false} activeDot={false} />
-                                </ComposedChart>
-                            </ResponsiveContainer>
-                        </div>
-                         <div className="flex justify-between text-[10px] text-gray-500 px-2">
-                            <span>Elasticity (ε): {selectedProduct.elasticity}</span>
-                            <span>R² = {selectedProduct.r2}</span>
-                        </div>
+                    
+                    {/* TABS */}
+                    <div className="flex gap-4 mt-4">
+                        <button onClick={() => setActiveTab('strategy')} className={`pb-2 text-sm font-bold transition-all border-b-2 ${activeTab === 'strategy' ? 'text-white border-green-500' : 'text-gray-500 border-transparent hover:text-white'}`}>Strategic View</button>
+                        <button onClick={() => setActiveTab('econometrics')} className={`pb-2 text-sm font-bold transition-all border-b-2 ${activeTab === 'econometrics' ? 'text-white border-green-500' : 'text-gray-500 border-transparent hover:text-white'}`}>Econometric Model</button>
                     </div>
+                </div>
 
-                    <div className="space-y-6">
-                        {/* ROBUSTNESS CARD (NEW) */}
-                        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
-                            <h4 className="text-xs font-bold text-white mb-3 flex items-center gap-2"><Microscope size={14} className="text-purple-400"/> Model Robustness</h4>
-                            <div className="grid grid-cols-2 gap-3">
-                                <StatBox label="Std. Error" value={selectedProduct.std_err} color="text-gray-300" />
-                                <StatBox label="P-Value" value={selectedProduct.p_value < 0.001 ? "< 0.001" : selectedProduct.p_value} color={selectedProduct.p_value < 0.05 ? "text-green-400" : "text-red-400"} />
+                <div className="p-6 flex-1 overflow-y-auto">
+                    
+                    {/* VIEW 1: STRATEGY */}
+                    {activeTab === 'strategy' && (
+                        <div className="space-y-6 animate-fade-in">
+                            <div className="bg-[#0F0F0F] border border-white/10 p-4 rounded-xl">
+                                <h3 className="text-xs font-bold text-gray-300 mb-4 flex items-center gap-2"><BarChart2 size={14}/> Demand Curve Model</h3>
+                                <div className="h-60 w-full">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <ComposedChart margin={{top: 5, right: 5, bottom: 5, left: -20}}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false}/>
+                                            <XAxis dataKey="p" type="number" name="Price" unit="€" stroke="#666" fontSize={10} domain={['dataMin', 'dataMax']}/>
+                                            <YAxis dataKey="q" type="number" name="Qty" stroke="#666" fontSize={10}/>
+                                            <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: '#000', borderColor: '#333', fontSize: '12px' }} />
+                                            <Scatter name="Observations" data={selectedProduct.plot_points} fill="#333" line={false} shape="circle" />
+                                            <Line data={selectedProduct.curve_data} dataKey="q" type="monotone" stroke="#22c55e" strokeWidth={2} dot={false} activeDot={false} />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
-                            <p className="text-[10px] text-gray-500 mt-2 italic">
-                                {selectedProduct.p_value < 0.05 ? "Statistically significant at 95% confidence level." : "Warning: Results may not be statistically significant."}
-                            </p>
-                        </div>
 
-                        {/* COEFFICIENTS CARD (UPDATED WITH FUEL/INFLATION) */}
-                        <div>
-                            <h4 className="text-xs font-bold text-white mb-3">Multivariate Coefficients</h4>
-                            <div className="grid grid-cols-2 gap-3">
-                                <StatBox label="Fuel Sens." value={selectedProduct.coefficients["Gas Sens."]} color="text-gray-300" icon={<Fuel size={12}/>} />
-                                <StatBox label="Inflation Sens." value={selectedProduct.coefficients["Inflation Sens."]} color="text-gray-300" icon={<Coins size={12}/>} />
-                                <StatBox label="Promo Lift" value={selectedProduct.coefficients["Promo Lift"]} color="text-green-400" icon={<Tag size={12}/>} />
+                            <div className="p-4 rounded-xl bg-blue-900/10 border border-blue-500/20">
+                                <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Calculator size={14}/> Strategic Implication</h4>
+                                <p className="text-xs text-gray-400 leading-relaxed">
+                                    {selectedProduct.elasticity > -1 
+                                    ? `INELASTIC DEMAND (ε = ${selectedProduct.elasticity}). Quantity demanded is insensitive to price changes. A price increase is recommended to maximize margins.`
+                                    : `ELASTIC DEMAND (ε = ${selectedProduct.elasticity}). Quantity demanded is highly sensitive. A price increase would cause a disproportionate drop in volume.`}
+                                </p>
                             </div>
                         </div>
+                    )}
 
-                         <div className="p-4 rounded-xl bg-blue-900/10 border border-blue-500/20">
-                            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Calculator size={14}/> Economic Logic</h4>
-                            <p className="text-xs text-gray-400 leading-relaxed">
-                                {selectedProduct.elasticity > -1 
-                                ? `INELASTIC DEMAND (ε = ${selectedProduct.elasticity}). Quantity demanded is insensitive to price changes. A price increase is recommended to maximize margins, as volume loss will be minimal.`
-                                : `ELASTIC DEMAND (ε = ${selectedProduct.elasticity}). Quantity demanded is highly sensitive. A price increase would cause a disproportionate drop in volume. Consider maintaining or lowering price to capture market share.`}
-                            </p>
+                    {/* VIEW 2: ECONOMETRICS (SCIENTIFIC) */}
+                    {activeTab === 'econometrics' && (
+                        <div className="space-y-6 animate-fade-in">
+                             <div className="p-4 rounded-xl bg-[#0F0F0F] border border-white/10 font-mono">
+                                <p className="text-[10px] text-gray-500 uppercase mb-2">Model Specification</p>
+                                <div className="text-xs text-green-400 bg-black p-3 rounded border border-white/5 overflow-x-auto whitespace-nowrap">
+                                    ln(Q) = α + β1*ln(Price) + β2*Promo + β3*Temp + β4*Gas + β5*Inf + ε
+                                </div>
+                            </div>
+
+                            <div className="border border-white/10 rounded-xl overflow-hidden">
+                                <table className="w-full text-left text-xs font-mono">
+                                    <thead className="bg-white/5 text-gray-400 border-b border-white/10">
+                                        <tr>
+                                            <th className="p-3 font-normal">Variable</th>
+                                            <th className="p-3 font-normal text-right">Coeff.</th>
+                                            <th className="p-3 font-normal text-right">Std.Err</th>
+                                            <th className="p-3 font-normal text-right">P&gt;|t|</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {selectedProduct.regression_table.map((row: any, i:number) => (
+                                            <tr key={i} className="border-b border-white/5 last:border-0">
+                                                <td className="p-3 text-gray-300">{row.variable}</td>
+                                                <td className="p-3 text-right text-white font-bold">{row.coef}</td>
+                                                <td className="p-3 text-right text-gray-500">{row.std_err}</td>
+                                                <td className={`p-3 text-right ${row.p_value < 0.05 ? 'text-green-400' : 'text-red-400'}`}>{row.p_value.toFixed(3)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs text-gray-500 px-2">
+                                <span>R-Squared: <strong className="text-white">{selectedProduct.r2}</strong></span>
+                                <span>Obs: <strong className="text-white">730</strong></span>
+                            </div>
                         </div>
+                    )}
 
-                        <button className="w-full py-3 bg-white text-black font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
-                            <FileText size={14}/> Export Technical Report
-                        </button>
-                    </div>
+                    <button className="w-full mt-8 py-3 bg-white text-black font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                        <FileText size={14}/> Export Report
+                    </button>
 
                 </div>
             </motion.div>
@@ -210,17 +272,6 @@ function KpiCard({ label, value, sub, icon }: any) {
             </div>
             <p className="text-3xl font-bold text-white mb-1">{value}</p>
             <p className="text-[10px] text-gray-400">{sub}</p>
-        </div>
-    )
-}
-
-function StatBox({ label, value, color, icon }: any) {
-    return (
-        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-lg flex justify-between items-center">
-            <div>
-                <p className="text-[9px] text-gray-500 uppercase mb-1 flex items-center gap-1">{icon} {label}</p>
-                <p className={`text-sm font-bold font-mono ${color}`}>{value}</p>
-            </div>
         </div>
     )
 }
