@@ -339,7 +339,7 @@ def vc_calc(tam: float, quota: float, margem: float, multiplo: float, desconto: 
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
-# === 5. ELASTIC ENGINE (SCIENTIFIC UPDATE) ===
+# === 5. ELASTIC ENGINE (FULL EQUATION UPDATE) ===
 # ==========================================
 
 def run_multivariate_ols(y, X):
@@ -388,7 +388,7 @@ def run_multivariate_ols(y, X):
 @app.get("/api/elastic")
 def elastic_engine(category_filter: str = "All"):
     try:
-        # A. GERADOR DE DADOS (Mantém a lógica anterior)
+        # A. GERADOR DE DADOS (Mantido)
         n_days = 730
         dates = pd.date_range(start="2022-01-01", periods=n_days)
         days = np.arange(n_days)
@@ -431,7 +431,6 @@ def elastic_engine(category_filter: str = "All"):
             prices = np.maximum(prices, 0.1)
             promos = (price_shocks < -0.10).astype(int)
             
-            # Equação Geradora (Truth)
             log_q = (4.0 + prod["params"][0] * np.log(prices) + 0.5 * promos + 
                      0.01 * temp + prod["params"][1] * gas_price + 
                      prod["params"][2] * inflation * 10 + 0.3 * is_weekend)
@@ -449,19 +448,26 @@ def elastic_engine(category_filter: str = "All"):
             if len(df_prod) > 50:
                 # ESTIMAÇÃO OLS
                 y = np.log(df_prod["Q"]).values
+                # Ordem das variáveis X:
+                # 0: Constante (adicionada auto)
+                # 1: ln(Price)
+                # 2: Promo
+                # 3: Temp
+                # 4: Gas
+                # 5: Inf
+                # 6: Weekend
                 X = np.column_stack([
-                    np.log(df_prod["P"]).values, # 1. Price
-                    df_prod["Promo"].values,     # 2. Promo
-                    df_prod["Temp"].values,      # 3. Temp
-                    df_prod["Gas"].values,       # 4. Gas
-                    df_prod["Inf"].values,       # 5. Inflation
-                    df_prod["Weekend"].values    # 6. Weekend
+                    np.log(df_prod["P"]).values,
+                    df_prod["Promo"].values,
+                    df_prod["Temp"].values,
+                    df_prod["Gas"].values,
+                    df_prod["Inf"].values,
+                    df_prod["Weekend"].values
                 ])
                 
                 betas, r2, p_vals, std_err = run_multivariate_ols(y, X)
                 
-                # Mapeamento de Variáveis para a Tabela Científica
-                var_names = ["Intercept", "ln(Price)", "Promo Flag", "Temperature", "Fuel Price", "Inflation", "Weekend"]
+                var_names = ["Intercept", "ln(Price)", "Promo", "Temp", "GasPrice", "Inflation", "Weekend"]
                 
                 regression_table = []
                 for k in range(len(var_names)):
@@ -472,11 +478,9 @@ def elastic_engine(category_filter: str = "All"):
                         "p_value": p_vals[k]
                     })
 
-                # Resultados Principais
                 elasticity = betas[1]
                 p_val_price = p_vals[1]
                 
-                # Lógica de Recomendação
                 if elasticity > -1: 
                     tag = "Inelastic (Rigid)"
                     action = "Increase Price" if p_val_price < 0.1 else "Test Price Hike"
@@ -484,10 +488,16 @@ def elastic_engine(category_filter: str = "All"):
                     tag = "Elastic (Sensitive)"
                     action = "Lower Price" if elasticity < -1.5 and p_val_price < 0.1 else "Maintain"
 
-                # Equação Visual
-                eq_str = f"ln(Q) = {betas[0]:.2f} {betas[1]:.2f}*ln(P) + {betas[2]:.2f}*Promo + ..."
+                # --- CORREÇÃO: EQUAÇÃO COMPLETA ---
+                # Formatação com sinais automáticos (+/-)
+                eq_str = (f"ln(Q) = {betas[0]:.2f} "
+                          f"{betas[1]:+.2f}*ln(P) "
+                          f"{betas[2]:+.2f}*Promo "
+                          f"{betas[3]:+.3f}*Temp "
+                          f"{betas[4]:+.2f}*Gas "
+                          f"{betas[5]:+.2f}*Inf "
+                          f"{betas[6]:+.2f}*Wknd")
 
-                # Dados Gráfico
                 sample = df_prod.sample(min(50, len(df_prod)))
                 plot_points = sample.apply(lambda x: {"p": x["P"], "q": x["Q"]}, axis=1).tolist()
                 
@@ -509,10 +519,16 @@ def elastic_engine(category_filter: str = "All"):
                     "tag": tag,
                     "action": action,
                     "equation": eq_str,
-                    "regression_table": regression_table, # A tabela completa
+                    "regression_table": regression_table,
                     "plot_points": plot_points,
                     "curve_data": curve_data,
-                    "avg_price": round(df_prod["P"].mean(), 2)
+                    "avg_price": round(df_prod["P"].mean(), 2),
+                    "current_volume": int(df_prod["Q"].sum()), # Para o simulador
+                    "coefficients": {
+                        "Gas Sens.": round(betas[4], 2),
+                        "Inflation Sens.": round(betas[5], 2),
+                        "Promo Lift": f"{round((np.exp(betas[2])-1)*100, 1)}%"
+                    }
                 })
         
         return sorted(results, key=lambda x: x['elasticity'])
