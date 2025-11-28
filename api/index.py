@@ -390,11 +390,11 @@ def run_manual_ols(y, X):
         print(f"OLS Math Error: {e}")
         return np.zeros(X.shape[1] + 1), 0, [1.0] * (X.shape[1] + 1)
 
+# --- ROTA 1: ELASTIC ENGINE (ATUALIZADO COM DADOS DO GRÁFICO) ---
 @app.get("/api/elastic")
 def elastic_engine(category_filter: str = "All"):
     try:
-        # 1. GERADOR DE DADOS ON-THE-FLY (Simulação de Base de Dados Sonae)
-        # Gera dados em memória para evitar erros de leitura de ficheiros no serverless
+        # 1. Gerar Dados Simulados (On-the-fly)
         data = []
         products_base = [
             {"n": "Leite Meio Gordo", "p": 0.90, "e": -0.4, "c": "Dairy"},
@@ -407,16 +407,19 @@ def elastic_engine(category_filter: str = "All"):
             {"n": "Arroz Agulha", "p": 1.10, "e": -0.3, "c": "Grocery"}
         ]
         
-        # Gerar 1000 transações simuladas
-        for _ in range(1000):
+        # Gerar 2000 transações para ter densidade estatística
+        for _ in range(2000):
             p_info = products_base[np.random.randint(0, len(products_base))]
+            # Simular choque de preço realista (log-normal para evitar preços negativos)
             shock = np.random.normal(0, 0.15)
             price = round(p_info["p"] * (1 + shock), 2)
             if price < 0.1: price = 0.1
             
-            # Curva da procura: Quanto maior o preço, menor a quantidade (baseado na elasticidade)
-            qty = int(np.random.poisson(50) * (price / p_info["p"]) ** p_info["e"])
-            
+            # Curva da procura com erro aleatório (ruído de mercado)
+            noise = np.random.normal(0, 0.1) 
+            qty = int(np.random.poisson(50) * (price / p_info["p"]) ** p_info["e"] * (1 + noise))
+            if qty < 0: qty = 0
+
             data.append({
                 "category": p_info["c"],
                 "product": p_info["n"],
@@ -426,59 +429,65 @@ def elastic_engine(category_filter: str = "All"):
             })
             
         df = pd.DataFrame(data)
-        
-        # Filtro de Categoria
         if category_filter != "All":
             df = df[df["category"] == category_filter]
 
-        # 2. MOTOR ECONOMÉTRICO (Log-Linear Model)
+        # 2. Motor Econométrico
         results = []
-        
-        # Transformação Log-Log (ln(Q) = a + b*ln(P))
-        # Adicionamos 1 à quantidade para evitar log(0)
         df['ln_Qtd'] = np.log(df['quantity'] + 1)
         df['ln_Price'] = np.log(df['price'])
         
         for product in df['product'].unique():
             sub = df[df['product'] == product]
-            
-            # Só correr modelo se houver dados suficientes (>10 linhas)
             if len(sub) > 10:
                 y = sub['ln_Qtd'].values
-                # Variáveis Explicativas: Preço(log) e Promoção
                 X = np.column_stack([sub['ln_Price'].values, sub['is_promo'].values])
                 
-                # Executar regressão manual
+                # Regressão OLS Manual
                 betas, r2, p_vals = run_manual_ols(y, X)
                 
-                # O Beta[1] corresponde à variável ln_Price, ou seja, a Elasticidade
+                intercept = betas[0]
                 elasticity = betas[1]
-                p_value = p_vals[1]
+                promo_effect = betas[2]
                 
-                # Classificação Económica
+                # Interpretação de Negócio
                 if elasticity < -1: tag = "Elastic (Sensitive)"
                 elif elasticity > -1: tag = "Inelastic (Stable)"
                 else: tag = "Unitary"
                 
-                # Recomendação de Negócio (Lógica Sonae)
-                if elasticity > -1 and p_value < 0.1: action = "Increase Price (+Margin)"
-                elif elasticity < -1.5 and p_value < 0.1: action = "Lower Price (+Volume)"
+                if elasticity > -1 and p_vals[1] < 0.1: action = "Increase Price (+Margin)"
+                elif elasticity < -1.5 and p_vals[1] < 0.1: action = "Lower Price (+Volume)"
                 else: action = "Maintain"
+
+                # Gerar Pontos para o Gráfico (Curva de Procura Ajustada)
+                # Criamos uma curva teórica baseada nos betas estimados
+                price_range = np.linspace(sub['price'].min(), sub['price'].max(), 20)
+                curve_data = []
+                for p in price_range:
+                    # ln(Q) = alpha + beta*ln(P) + beta_promo*0 (assumindo sem promo para a curva base)
+                    ln_q_pred = intercept + elasticity * np.log(p)
+                    q_pred = np.exp(ln_q_pred)
+                    curve_data.append({"price": round(p, 2), "predicted_qty": round(q_pred, 1)})
+
+                # Pontos reais (amostra para não pesar no JSON)
+                real_points = sub[['price', 'quantity']].sample(min(50, len(sub))).to_dict(orient='records')
 
                 results.append({
                     "product": product,
                     "category": sub['category'].iloc[0],
-                    "elasticity": round(elasticity, 2),
-                    "p_value": round(p_value, 3),
-                    "r2": round(r2, 2),
-                    "significance": "High" if p_value < 0.05 else "Low",
+                    "elasticity": round(elasticity, 3),
+                    "p_value": round(p_vals[1], 4),
+                    "r2": round(r2, 3),
+                    "promo_lift": round((np.exp(promo_effect) - 1) * 100, 1), # Impacto % da promoção
                     "tag": tag,
                     "action": action,
                     "avg_price": round(sub['price'].mean(), 2),
-                    "current_volume": int(sub['quantity'].sum())
+                    "obs_count": len(sub),
+                    "intercept": round(intercept, 2),
+                    "curve_data": curve_data, # Dados da linha
+                    "real_points": real_points # Dados dos pontos (scatter)
                 })
         
-        # Ordenar resultados por sensibilidade ao preço
         return sorted(results, key=lambda x: x['elasticity'])
 
     except Exception as e:
