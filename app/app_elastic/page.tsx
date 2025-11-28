@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, RefreshCcw, Activity, ShoppingCart, TrendingUp, TrendingDown, Tag, Filter, X, BarChart2, Calculator, FileText, Thermometer, Fuel } from 'lucide-react';
+import { ArrowLeft, RefreshCcw, Activity, ShoppingCart, TrendingUp, TrendingDown, Tag, Filter, X, BarChart2, Calculator, FileText, Thermometer, Fuel, Coins, Microscope } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ComposedChart, Line, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
@@ -35,7 +35,7 @@ export default function ElasticPage() {
                     <a href="/" className="text-gray-400 hover:text-white transition-colors"><ArrowLeft size={20}/></a>
                     <div className="h-6 w-px bg-white/10"></div>
                     <span className="font-bold text-lg tracking-tight text-white flex items-center gap-2">
-                        ELASTIC <span className="text-xs font-mono bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">ENTERPRISE v2.1</span>
+                        ELASTIC <span className="text-xs font-mono bg-green-900/30 text-green-400 px-2 py-0.5 rounded border border-green-500/20">ENTERPRISE v2.2</span>
                     </span>
                 </div>
                 <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
@@ -49,9 +49,9 @@ export default function ElasticPage() {
           <div className="p-6 max-w-7xl mx-auto w-full">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
                 <KpiCard label="SKUs Modeled" value={data.length.toString()} sub="Multivariate Regressions" icon={<ShoppingCart size={18} className="text-blue-400"/>} />
-                <KpiCard label="High Sensitivity" value={data.filter(i => i.elasticity < -1.5).length.toString()} sub="ε < -1.5" icon={<Activity size={18} className="text-red-400"/>} />
-                <KpiCard label="Opportunities" value={data.filter(i => i.action !== "Maintain").length.toString()} sub="Pricing Actions" icon={<TrendingUp size={18} className="text-green-400"/>} />
-                <KpiCard label="Model R² (Avg)" value={data.length > 0 ? (data.reduce((a,b)=>a+b.r2,0)/data.length).toFixed(2) : "-"} sub="Explained Variance" icon={<Tag size={18} className="text-purple-400"/>} />
+                <KpiCard label="High Sensitivity" value={data.filter(i => i.elasticity < -1.5).length.toString()} sub="ε < -1.5 (Elastic)" icon={<Activity size={18} className="text-red-400"/>} />
+                <KpiCard label="Price Opportunities" value={data.filter(i => i.action !== "Maintain").length.toString()} sub="Revenue Actions" icon={<TrendingUp size={18} className="text-green-400"/>} />
+                <KpiCard label="Model Fit (R² Avg)" value={data.length > 0 ? (data.reduce((a,b)=>a+b.r2,0)/data.length).toFixed(2) : "-"} sub="Variance Explained" icon={<Tag size={18} className="text-purple-400"/>} />
             </div>
 
             <div className="bg-[#0F0F0F] border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
@@ -71,8 +71,8 @@ export default function ElasticPage() {
                                 <th className="p-4 font-normal">Product / SKU</th>
                                 <th className="p-4 font-normal text-right">Avg Price</th>
                                 <th className="p-4 font-normal text-right">Elasticity (ε)</th>
-                                <th className="p-4 font-normal">Sensitivity</th>
-                                <th className="p-4 font-normal">Recommendation</th>
+                                <th className="p-4 font-normal">Classification</th>
+                                <th className="p-4 font-normal">AI Recommendation</th>
                                 <th className="p-4 font-normal text-right">R²</th>
                             </tr>
                         </thead>
@@ -96,7 +96,7 @@ export default function ElasticPage() {
                                     <td className="p-4 text-right font-mono font-bold text-white">{item.elasticity.toFixed(2)}</td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-[10px] uppercase font-bold border ${item.tag.includes("Elastic") ? "bg-red-900/20 text-red-400 border-red-500/20" : "bg-blue-900/20 text-blue-400 border-blue-500/20"}`}>
-                                            {item.tag.split(' ')[0]}
+                                            {item.tag}
                                         </span>
                                     </td>
                                     <td className="p-4">
@@ -135,8 +135,9 @@ export default function ElasticPage() {
                         <button onClick={() => setSelectedProduct(null)} className="p-2 hover:bg-white/10 rounded-full transition-colors"><X size={20}/></button>
                     </div>
 
+                    {/* CHART */}
                     <div className="bg-[#0F0F0F] border border-white/10 p-4 rounded-xl mb-6">
-                        <h3 className="text-xs font-bold text-gray-300 mb-4 flex items-center gap-2"><BarChart2 size={14}/> Demand Function Visualization</h3>
+                        <h3 className="text-xs font-bold text-gray-300 mb-4 flex items-center gap-2"><BarChart2 size={14}/> Demand Curve (Ceteris Paribus)</h3>
                         <div className="h-60 w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart margin={{top: 5, right: 5, bottom: 5, left: -20}}>
@@ -149,33 +150,47 @@ export default function ElasticPage() {
                                 </ComposedChart>
                             </ResponsiveContainer>
                         </div>
+                         <div className="flex justify-between text-[10px] text-gray-500 px-2">
+                            <span>Elasticity (ε): {selectedProduct.elasticity}</span>
+                            <span>R² = {selectedProduct.r2}</span>
+                        </div>
                     </div>
 
                     <div className="space-y-6">
-                        <div className="p-4 rounded-xl bg-blue-900/10 border border-blue-500/20">
-                            <p className="text-xs font-mono text-blue-400 uppercase mb-2">Econometric Equation</p>
-                            <p className="font-mono text-sm text-white tracking-tight break-all">{selectedProduct.equation}</p>
-                            <p className="text-[10px] text-gray-500 mt-2 italic">*Controlling for Seasonality & Macro Factors</p>
+                        {/* ROBUSTNESS CARD (NEW) */}
+                        <div className="p-4 rounded-xl bg-white/[0.03] border border-white/10">
+                            <h4 className="text-xs font-bold text-white mb-3 flex items-center gap-2"><Microscope size={14} className="text-purple-400"/> Model Robustness</h4>
+                            <div className="grid grid-cols-2 gap-3">
+                                <StatBox label="Std. Error" value={selectedProduct.std_err} color="text-gray-300" />
+                                <StatBox label="P-Value" value={selectedProduct.p_value < 0.001 ? "< 0.001" : selectedProduct.p_value} color={selectedProduct.p_value < 0.05 ? "text-green-400" : "text-red-400"} />
+                            </div>
+                            <p className="text-[10px] text-gray-500 mt-2 italic">
+                                {selectedProduct.p_value < 0.05 ? "Statistically significant at 95% confidence level." : "Warning: Results may not be statistically significant."}
+                            </p>
                         </div>
 
+                        {/* COEFFICIENTS CARD (UPDATED WITH FUEL/INFLATION) */}
                         <div>
                             <h4 className="text-xs font-bold text-white mb-3">Multivariate Coefficients</h4>
                             <div className="grid grid-cols-2 gap-3">
+                                <StatBox label="Fuel Sens." value={selectedProduct.coefficients["Gas Sens."]} color="text-gray-300" icon={<Fuel size={12}/>} />
+                                <StatBox label="Inflation Sens." value={selectedProduct.coefficients["Inflation Sens."]} color="text-gray-300" icon={<Coins size={12}/>} />
                                 <StatBox label="Promo Lift" value={selectedProduct.coefficients["Promo Lift"]} color="text-green-400" icon={<Tag size={12}/>} />
-                                <StatBox label="Weekend Effect" value={selectedProduct.coefficients["Weekend Lift"]} color="text-yellow-400" icon={<Activity size={12}/>} />
-                                <StatBox label="Temp Sens." value={selectedProduct.coefficients["Temp Sens"]} color="text-gray-300" icon={<Thermometer size={12}/>} />
-                                <StatBox label="Fuel Sens." value={selectedProduct.coefficients["Gas Sens"]} color="text-gray-300" icon={<Fuel size={12}/>} />
                             </div>
                         </div>
 
-                         <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-                            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Calculator size={14}/> Strategic Implication</h4>
+                         <div className="p-4 rounded-xl bg-blue-900/10 border border-blue-500/20">
+                            <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-2"><Calculator size={14}/> Economic Logic</h4>
                             <p className="text-xs text-gray-400 leading-relaxed">
-                                {selectedProduct.elasticity < -1 
-                                ? `Demand is highly sensitive (ε = ${selectedProduct.elasticity}). A 10% price cut could increase volume by ${Math.abs(selectedProduct.elasticity * 10).toFixed(1)}%, potentially increasing revenue.`
-                                : `Demand is inelastic (ε = ${selectedProduct.elasticity}). Consumers are not sensitive to price. Increasing price is recommended to improve margins.`}
+                                {selectedProduct.elasticity > -1 
+                                ? `INELASTIC DEMAND (ε = ${selectedProduct.elasticity}). Quantity demanded is insensitive to price changes. A price increase is recommended to maximize margins, as volume loss will be minimal.`
+                                : `ELASTIC DEMAND (ε = ${selectedProduct.elasticity}). Quantity demanded is highly sensitive. A price increase would cause a disproportionate drop in volume. Consider maintaining or lowering price to capture market share.`}
                             </p>
                         </div>
+
+                        <button className="w-full py-3 bg-white text-black font-bold text-xs rounded-lg uppercase tracking-wider hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+                            <FileText size={14}/> Export Technical Report
+                        </button>
                     </div>
 
                 </div>
