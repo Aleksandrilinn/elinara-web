@@ -224,26 +224,37 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 md:grid-rows-2 gap-6 h-auto md:h-[600px]">
           
           {/* 1. Elastic */}
-          <div className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-blue-500/50 transition-all overflow-hidden cursor-default">
-            <div className="absolute top-4 right-4">
-              <span className="px-3 py-1 text-xs font-mono rounded bg-green-900/30 text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(74,222,128,0.1)]">PROTOTYPE</span>
-            </div>
-            <div className="h-full flex flex-col justify-between relative z-10">
-              <div>
-                <h3 className="text-3xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">Elastic</h3>
-                <p className="text-gray-400 text-sm max-w-lg">Dynamic pricing via OCR. Functional prototype in development for future integration with real-time retail databases.</p>
-              </div>
-              <div className="mt-4 text-xs font-mono text-gray-600 flex items-center gap-1">
-                    <span className="animate-pulse">●</span> In Development
-                </div>
-              <div className="flex gap-3 mt-6">
-                 <SiPython className="text-gray-500 hover:text-white transition-colors" size={20}/>
-                 <SiStreamlit className="text-gray-500 hover:text-white transition-colors" size={20}/>
-                 <DiJavascript className="text-gray-500 hover:text-white transition-colors" size={20}/>
-              </div>
-            </div>
-            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/20 transition-all"></div>
-          </div>
+<a href="/app_elastic" className="group relative md:col-span-2 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-blue-500/50 transition-all overflow-hidden cursor-pointer block">
+  <div className="absolute top-4 right-4">
+    <span className="px-3 py-1 text-xs font-mono rounded bg-green-900/30 text-green-400 border border-green-500/20 shadow-[0_0_10px_rgba(74,222,128,0.1)]">
+      PROTOTYPE
+    </span>
+  </div>
+
+  <div className="h-full flex flex-col justify-between relative z-10">
+    <div>
+      <h3 className="text-3xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+        Elastic
+      </h3>
+      <p className="text-gray-400 text-sm max-w-lg">
+        Dynamic pricing via OCR. Functional prototype in development for future integration with real-time retail databases.
+      </p>
+    </div>
+
+    <div className="mt-4 text-xs font-mono text-gray-600 flex items-center gap-1">
+      <span className="animate-pulse">●</span> In Development
+    </div>
+
+    <div className="flex gap-3 mt-6">
+      <SiPython className="text-gray-500 hover:text-white transition-colors" size={20}/>
+      <SiStreamlit className="text-gray-500 hover:text-white transition-colors" size={20}/>
+      <DiJavascript className="text-gray-500 hover:text-white transition-colors" size={20}/>
+    </div>
+  </div>
+
+  <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-blue-600/10 rounded-full blur-[80px] group-hover:bg-blue-600/20 transition-all"></div>
+</a>
+
 
          {/* 2. DCF Engine */}
           <a href="/dcf" className="group relative md:col-span-1 row-span-1 rounded-2xl bg-[#0F0F0F] border border-white/10 p-8 hover:border-blue-500/50 transition-all cursor-pointer block">
