@@ -134,105 +134,6 @@ def optimize_weights_manual(X0, X1, iterations=3000, lr=1e-4):
     return W
 
 # ==========================================
-# === 2. FUNÇÕES MATEMÁTICAS MANUAIS (CRÍTICAS PARA O ELASTIC) ===
-# ==========================================
-
-def run_manual_ols(y, X):
-    """
-    Executa Regressão Linear (OLS) usando apenas Numpy.
-    Retorna coeficientes, p-values (aprox) e R-squared.
-    Essencial para o Elastic Engine sem usar statsmodels.
-    """
-    try:
-        # Adicionar constante (intercepto)
-        X = np.column_stack([np.ones(len(X)), X])
-        
-        # Calcular Betas: (X'X)^-1 X'Y
-        # Usamos lstsq para estabilidade numérica
-        beta, residuals, rank, s = np.linalg.lstsq(X, y, rcond=None)
-        
-        # Calcular R-Squared
-        y_mean = np.mean(y)
-        tss = np.sum((y - y_mean)**2)
-        rss = np.sum((y - np.dot(X, beta))**2) if not residuals.size else residuals[0]
-        r_squared = 1 - (rss / tss) if tss > 0 else 0
-        
-        # Calcular Erro Padrão e P-Values (Simplificado para t-stat)
-        # Nota: Isto é uma aproximação para evitar importar scipy.stats
-        n, k = X.shape
-        if n > k:
-            sigma2 = rss / (n - k)
-            # Adicionar pequeno epsilon à diagonal para evitar matriz singular
-            XtX = np.dot(X.T, X)
-            XtX_inv = np.linalg.inv(XtX + np.eye(k) * 1e-6) 
-            cov_matrix = sigma2 * XtX_inv
-            std_err = np.sqrt(np.diag(cov_matrix))
-            # Evitar divisão por zero
-            std_err[std_err == 0] = 1e-10
-            t_stats = beta / std_err
-            
-            # Aproximação grosseira de p-value (sem scipy): se t > 1.96, p < 0.05
-            p_values = []
-            for t in t_stats:
-                abs_t = abs(t)
-                if abs_t > 3.29: p = 0.001
-                elif abs_t > 2.58: p = 0.01
-                elif abs_t > 1.96: p = 0.05
-                elif abs_t > 1.64: p = 0.10
-                else: p = 0.20
-                p_values.append(p)
-        else:
-            p_values = [1.0] * k
-
-        return beta, r_squared, p_values
-    except Exception as e:
-        print(f"OLS Error: {e}")
-        return np.zeros(X.shape[1] + 1), 0, [1.0] * (X.shape[1] + 1)
-
-def optimize_weights_manual(X0, X1, iterations=3000, lr=1e-4):
-    """SCM: Gradient Descent para encontrar pesos sintéticos"""
-    n_donors = X0.shape[1]
-    W = np.ones(n_donors) / n_donors
-    max_val = np.max(np.abs(X0))
-    if max_val == 0: return W
-    X0_norm = X0 / max_val; X1_norm = X1 / max_val
-
-    for _ in range(iterations):
-        pred = np.dot(X0_norm, W)
-        error = pred - X1_norm
-        grad = np.dot(X0_norm.T, error)
-        W = W - lr * grad
-        W = np.maximum(W, 0)
-        sum_w = np.sum(W)
-        if sum_w > 0: W = W / sum_w
-        else: W = np.ones(n_donors) / n_donors
-    return W
-
-def _get_metric(df, key, fallback=[], idx=0):
-    keys = [key] + fallback
-    if df is None or df.empty: return 0.0
-    for k in keys:
-        if k in df.index:
-            try: return float(df.loc[k].iloc[idx])
-            except: pass
-    return 0.0
-
-def fetch_wb_data(indicator_code):
-    countries = ";".join([TARGET_COUNTRY] + DONOR_POOL)
-    url = f"http://api.worldbank.org/v2/country/{countries}/indicator/{indicator_code}?format=json&per_page=5000&date=2010:2023"
-    try:
-        r = requests.get(url, timeout=10); data = r.json()
-        if not data or len(data) < 2: return None
-        records = []
-        for entry in data[1]:
-            if entry['value'] is not None:
-                records.append({"country": entry['countryiso3code'], "year": int(entry['date']), "value": float(entry['value'])})
-        df = pd.DataFrame(records)
-        if df.empty: return None
-        return df.pivot(index="year", columns="country", values="value").dropna(axis=1).sort_index()
-    except: return None
-
-# ==========================================
 # === 3. ROTAS DA API ===
 # ==========================================
 
@@ -437,13 +338,64 @@ def vc_calc(tam: float, quota: float, margem: float, multiplo: float, desconto: 
         }
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
-## --- ROTA 1: ELASTIC ENGINE (NOVA - MOTOR NUMPY) ---
+# ==========================================
+# === ELASTIC ENGINE (ADD-ON) ===
+# ==========================================
+
+def run_manual_ols(y, X):
+    """
+    Executa Regressão Linear (OLS) usando apenas Numpy.
+    Substitui statsmodels para poupar memória no Vercel.
+    """
+    try:
+        # Adicionar constante (intercepto)
+        X = np.column_stack([np.ones(len(X)), X])
+        
+        # Calcular Betas: (X'X)^-1 X'Y
+        beta, residuals, rank, s = np.linalg.lstsq(X, y, rcond=None)
+        
+        # Calcular R-Squared
+        y_mean = np.mean(y)
+        tss = np.sum((y - y_mean)**2)
+        rss = np.sum((y - np.dot(X, beta))**2) if not residuals.size else residuals[0]
+        r_squared = 1 - (rss / tss) if tss > 0 else 0
+        
+        # Calcular P-Values (Aproximação via t-stat)
+        n, k = X.shape
+        if n > k:
+            sigma2 = rss / (n - k)
+            XtX = np.dot(X.T, X)
+            # Adicionar epsilon para estabilidade inversa
+            XtX_inv = np.linalg.inv(XtX + np.eye(k) * 1e-6) 
+            cov_matrix = sigma2 * XtX_inv
+            std_err = np.sqrt(np.diag(cov_matrix))
+            std_err[std_err == 0] = 1e-10 # Evitar divisão por zero
+            t_stats = beta / std_err
+            
+            # Tabela de probabilidade t simplificada
+            p_values = []
+            for t in t_stats:
+                abs_t = abs(t)
+                if abs_t > 3.29: p = 0.001
+                elif abs_t > 2.58: p = 0.01
+                elif abs_t > 1.96: p = 0.05
+                elif abs_t > 1.64: p = 0.10
+                else: p = 0.20
+                p_values.append(p)
+        else:
+            p_values = [1.0] * k
+
+        return beta, r_squared, p_values
+    except Exception as e:
+        print(f"OLS Math Error: {e}")
+        return np.zeros(X.shape[1] + 1), 0, [1.0] * (X.shape[1] + 1)
+
 @app.get("/api/elastic")
 def elastic_engine(category_filter: str = "All"):
     try:
-        # 1. Gerar Dados Simulados (On-the-fly)
+        # 1. GERADOR DE DADOS ON-THE-FLY (Simulação de Base de Dados Sonae)
+        # Gera dados em memória para evitar erros de leitura de ficheiros no serverless
         data = []
-        # Definição de produtos base para simulação
         products_base = [
             {"n": "Leite Meio Gordo", "p": 0.90, "e": -0.4, "c": "Dairy"},
             {"n": "Manteiga", "p": 2.50, "e": -0.8, "c": "Dairy"},
@@ -455,14 +407,14 @@ def elastic_engine(category_filter: str = "All"):
             {"n": "Arroz Agulha", "p": 1.10, "e": -0.3, "c": "Grocery"}
         ]
         
-        # Gerar 1000 transações
+        # Gerar 1000 transações simuladas
         for _ in range(1000):
             p_info = products_base[np.random.randint(0, len(products_base))]
             shock = np.random.normal(0, 0.15)
             price = round(p_info["p"] * (1 + shock), 2)
             if price < 0.1: price = 0.1
             
-            # Curva da procura: Q = Base * (P/P0)^Elasticidade
+            # Curva da procura: Quanto maior o preço, menor a quantidade (baseado na elasticidade)
             qty = int(np.random.poisson(50) * (price / p_info["p"]) ** p_info["e"])
             
             data.append({
@@ -474,35 +426,41 @@ def elastic_engine(category_filter: str = "All"):
             })
             
         df = pd.DataFrame(data)
+        
+        # Filtro de Categoria
         if category_filter != "All":
             df = df[df["category"] == category_filter]
 
-        # 2. Motor Econométrico (Numpy OLS)
+        # 2. MOTOR ECONOMÉTRICO (Log-Linear Model)
         results = []
         
-        # Log-Log transformation
-        # ln(Q) = a + b*ln(P) + c*Promo
+        # Transformação Log-Log (ln(Q) = a + b*ln(P))
+        # Adicionamos 1 à quantidade para evitar log(0)
         df['ln_Qtd'] = np.log(df['quantity'] + 1)
         df['ln_Price'] = np.log(df['price'])
         
         for product in df['product'].unique():
             sub = df[df['product'] == product]
+            
+            # Só correr modelo se houver dados suficientes (>10 linhas)
             if len(sub) > 10:
                 y = sub['ln_Qtd'].values
-                # X: ln_Price e is_promo
+                # Variáveis Explicativas: Preço(log) e Promoção
                 X = np.column_stack([sub['ln_Price'].values, sub['is_promo'].values])
                 
                 # Executar regressão manual
                 betas, r2, p_vals = run_manual_ols(y, X)
                 
-                # Beta[1] é a elasticidade preço (o primeiro coef depois da constante)
+                # O Beta[1] corresponde à variável ln_Price, ou seja, a Elasticidade
                 elasticity = betas[1]
                 p_value = p_vals[1]
                 
+                # Classificação Económica
                 if elasticity < -1: tag = "Elastic (Sensitive)"
                 elif elasticity > -1: tag = "Inelastic (Stable)"
                 else: tag = "Unitary"
                 
+                # Recomendação de Negócio (Lógica Sonae)
                 if elasticity > -1 and p_value < 0.1: action = "Increase Price (+Margin)"
                 elif elasticity < -1.5 and p_value < 0.1: action = "Lower Price (+Volume)"
                 else: action = "Maintain"
@@ -520,6 +478,7 @@ def elastic_engine(category_filter: str = "All"):
                     "current_volume": int(sub['quantity'].sum())
                 })
         
+        # Ordenar resultados por sensibilidade ao preço
         return sorted(results, key=lambda x: x['elasticity'])
 
     except Exception as e:
