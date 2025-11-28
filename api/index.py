@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 import requests
 import datetime
-import statsmodels.formula.api as smf
 
 # NOTA: Removemos 'scipy' para poupar espaço no Vercel. 
 # Implementámos a otimização manualmente abaixo.
@@ -339,106 +338,91 @@ def vc_calc(tam: float, quota: float, margem: float, multiplo: float, desconto: 
         }
     except Exception as e: raise HTTPException(status_code=500, detail=str(e))
 
-# --- ROTA 5: ELASTIC ENGINE (Previsão de Procura) ---
+## --- ROTA 1: ELASTIC ENGINE (NOVA - MOTOR NUMPY) ---
 @app.get("/api/elastic")
 def elastic_engine(category_filter: str = "All"):
     try:
-        # 1. Ler os dados "da Sonae" (Simulados)
-        # Num ambiente real, isto seria uma Query SQL à base de dados deles
-        # O Vercel lê ficheiros estáticos da pasta onde corre, vamos tentar ler via URL local ou path relativo
-        # Para simplificar no serverless, vamos assumir que o pandas lê do url público do próprio site ou geramos on-the-fly se falhar
-        # MÉTODOS ROBUSTO: Gerar pequeno dataset on-the-fly para não depender de ficheiros locais no serverless
-        
-        # (Para esta demonstração funcionar sem erros de "File not found" no Vercel, 
-        # vou recriar a função geradora rápida aqui dentro. É mais seguro).
-        
-        # --- GERADOR DE DADOS ON-THE-FLY (Para evitar problemas de leitura de ficheiros) ---
+        # 1. Gerar Dados Simulados (On-the-fly)
         data = []
-        products = {
-            "Leite Meio Gordo": {"p": 0.90, "e": -0.4, "cat": "Dairy"},
-            "Manteiga": {"p": 2.50, "e": -0.8, "cat": "Dairy"},
-            "Café Grão": {"p": 12.00, "e": -1.5, "cat": "Grocery"},
-            "Detergente": {"p": 15.00, "e": -2.2, "cat": "Cleaning"},
-            "Cerveja": {"p": 6.00, "e": -1.8, "cat": "Drinks"},
-        }
+        # Definição de produtos base para simulação
+        products_base = [
+            {"n": "Leite Meio Gordo", "p": 0.90, "e": -0.4, "c": "Dairy"},
+            {"n": "Manteiga", "p": 2.50, "e": -0.8, "c": "Dairy"},
+            {"n": "Café Grão", "p": 12.00, "e": -1.5, "c": "Grocery"},
+            {"n": "Azeite Virgem", "p": 8.00, "e": -0.6, "c": "Grocery"},
+            {"n": "Detergente Roupa", "p": 15.00, "e": -2.2, "c": "Cleaning"},
+            {"n": "Bolachas Maria", "p": 1.20, "e": -1.1, "c": "Grocery"},
+            {"n": "Cerveja Pack 6", "p": 6.00, "e": -1.8, "c": "Drinks"},
+            {"n": "Arroz Agulha", "p": 1.10, "e": -0.3, "c": "Grocery"}
+        ]
         
-        # Gerar 500 linhas de dados em memória
-        for _ in range(500):
-            name = np.random.choice(list(products.keys()))
-            info = products[name]
+        # Gerar 1000 transações
+        for _ in range(1000):
+            p_info = products_base[np.random.randint(0, len(products_base))]
             shock = np.random.normal(0, 0.15)
-            price = round(info["p"] * (1 + shock), 2)
+            price = round(p_info["p"] * (1 + shock), 2)
             if price < 0.1: price = 0.1
             
-            # Curva da procura inversa
-            qty = int(np.random.poisson(50) * (price / info["p"]) ** info["e"])
+            # Curva da procura: Q = Base * (P/P0)^Elasticidade
+            qty = int(np.random.poisson(50) * (price / p_info["p"]) ** p_info["e"])
             
             data.append({
-                "category": info["cat"],
-                "product": name,
+                "category": p_info["c"],
+                "product": p_info["n"],
                 "quantity": qty,
                 "price": price,
-                "is_promo": 1 if shock < -0.1 else 0,
-                "day_of_week": np.random.randint(0, 7)
+                "is_promo": 1 if shock < -0.1 else 0
             })
             
         df = pd.DataFrame(data)
-        
-        # Filtro
         if category_filter != "All":
             df = df[df["category"] == category_filter]
 
-        # 2. O TEU MOTOR ECONOMÉTRICO (Adaptado)
+        # 2. Motor Econométrico (Numpy OLS)
         results = []
         
-        # Preparar dados (Log-Log)
-        df['ln_Qtd'] = np.log(df['quantity'] + 1) # +1 para evitar log(0)
+        # Log-Log transformation
+        # ln(Q) = a + b*ln(P) + c*Promo
+        df['ln_Qtd'] = np.log(df['quantity'] + 1)
         df['ln_Price'] = np.log(df['price'])
         
         for product in df['product'].unique():
-            sub_df = df[df['product'] == product]
-            
-            if len(sub_df) > 10: # Mínimo de dados
-                try:
-                    # Modelo Log-Linear Simples: ln(Q) = a + b*ln(P) + controlos
-                    # b é a elasticidade
-                    mod = smf.ols("ln_Qtd ~ ln_Price + C(is_promo) + C(day_of_week)", data=sub_df)
-                    res = mod.fit()
-                    
-                    elasticity = res.params['ln_Price']
-                    p_value = res.pvalues['ln_Price']
-                    r_squared = res.rsquared
-                    
-                    # Interpretação
-                    if elasticity < -1: tag = "Elastic (Sensitive)"
-                    elif elasticity > -1: tag = "Inelastic (Stable)"
-                    else: tag = "Unitary"
-                    
-                    # Recomendação de Preço (Lógica de Negócio)
-                    # Se Inelástico -> Subir Preço aumenta Receita
-                    # Se Elástico -> Baixar Preço aumenta Receita (pelo volume)
-                    if elasticity > -1 and p_value < 0.1: action = "Increase Price (+Margin)"
-                    elif elasticity < -1.5 and p_value < 0.1: action = "Lower Price (+Volume)"
-                    else: action = "Maintain"
-
-                    results.append({
-                        "product": product,
-                        "category": sub_df['category'].iloc[0],
-                        "elasticity": round(elasticity, 2),
-                        "p_value": round(p_value, 3),
-                        "r2": round(r_squared, 2),
-                        "significance": "High" if p_value < 0.05 else "Low",
-                        "tag": tag,
-                        "action": action,
-                        "avg_price": round(sub_df['price'].mean(), 2),
-                        "current_volume": int(sub_df['quantity'].sum())
-                    })
-                except: pass
+            sub = df[df['product'] == product]
+            if len(sub) > 10:
+                y = sub['ln_Qtd'].values
+                # X: ln_Price e is_promo
+                X = np.column_stack([sub['ln_Price'].values, sub['is_promo'].values])
                 
-        # Ordenar pelos mais sensíveis
-        results = sorted(results, key=lambda x: x['elasticity'])
+                # Executar regressão manual
+                betas, r2, p_vals = run_manual_ols(y, X) # type: ignore
+                
+                # Beta[1] é a elasticidade preço (o primeiro coef depois da constante)
+                elasticity = betas[1]
+                p_value = p_vals[1]
+                
+                if elasticity < -1: tag = "Elastic (Sensitive)"
+                elif elasticity > -1: tag = "Inelastic (Stable)"
+                else: tag = "Unitary"
+                
+                if elasticity > -1 and p_value < 0.1: action = "Increase Price (+Margin)"
+                elif elasticity < -1.5 and p_value < 0.1: action = "Lower Price (+Volume)"
+                else: action = "Maintain"
+
+                results.append({
+                    "product": product,
+                    "category": sub['category'].iloc[0],
+                    "elasticity": round(elasticity, 2),
+                    "p_value": round(p_value, 3),
+                    "r2": round(r2, 2),
+                    "significance": "High" if p_value < 0.05 else "Low",
+                    "tag": tag,
+                    "action": action,
+                    "avg_price": round(sub['price'].mean(), 2),
+                    "current_volume": int(sub['quantity'].sum())
+                })
         
-        return results
+        return sorted(results, key=lambda x: x['elasticity'])
 
     except Exception as e:
+        print(f"Elastic Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
