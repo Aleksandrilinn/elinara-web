@@ -7,3 +7,4 @@ requests
 curl_cffi
 lxml
 httpx
+statsmodels
